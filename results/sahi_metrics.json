@@ -1,0 +1,26 @@
+{
+  "method": "SAHI + YOLOv8s",
+  "slice_size": [
+    640,
+    640
+  ],
+  "overlap_ratio": 0.2,
+  "mAP50": 0.4523365030699509,
+  "mAP50_95": 0.25387823467291765,
+  "precision": 0.25545524958864413,
+  "total_predictions": 41888,
+  "inference_time_s": 132.3,
+  "time_per_image_s": 0.24,
+  "per_class_ap50": {
+    "pedestrian": 0.557,
+    "people": 0.3884,
+    "bicycle": 0.2552,
+    "car": 0.819,
+    "van": 0.4732,
+    "truck": 0.411,
+    "tricycle": 0.3213,
+    "awning-tricycle": 0.1512,
+    "bus": 0.6284,
+    "motor": 0.5186
+  }
+}
