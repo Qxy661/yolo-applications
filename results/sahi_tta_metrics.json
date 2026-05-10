@@ -1,0 +1,26 @@
+{
+  "method": "SAHI+TTA",
+  "mAP50": 0.4709643885712608,
+  "mAP50_95": 0.2635888811019699,
+  "total_predictions": 48373,
+  "per_class_ap50": {
+    "pedestrian": 0.5776,
+    "people": 0.4088,
+    "bicycle": 0.2632,
+    "car": 0.8336,
+    "van": 0.4907,
+    "truck": 0.4309,
+    "tricycle": 0.3532,
+    "awning-tricycle": 0.1656,
+    "bus": 0.645,
+    "motor": 0.5411
+  },
+  "inference_time_s": 789.0,
+  "time_per_image_s": 1.44,
+  "slice_size": [
+    640,
+    640
+  ],
+  "overlap_ratio": 0.2,
+  "tta": true
+}

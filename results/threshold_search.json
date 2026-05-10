@@ -1,0 +1,56 @@
+{
+  "method": "Threshold Grid Search (SAHI base)",
+  "best_conf": 0.05,
+  "best_mAP50": 0.4903,
+  "best_mAP50_95": 0.2677,
+  "grid_results": [
+    {
+      "conf_threshold": 0.05,
+      "mAP50": 0.4903,
+      "mAP50_95": 0.2677,
+      "num_predictions": 81344
+    },
+    {
+      "conf_threshold": 0.1,
+      "mAP50": 0.4826,
+      "mAP50_95": 0.2649,
+      "num_predictions": 63271
+    },
+    {
+      "conf_threshold": 0.15,
+      "mAP50": 0.4733,
+      "mAP50_95": 0.2618,
+      "num_predictions": 53716
+    },
+    {
+      "conf_threshold": 0.2,
+      "mAP50": 0.4635,
+      "mAP50_95": 0.2581,
+      "num_predictions": 46964
+    },
+    {
+      "conf_threshold": 0.25,
+      "mAP50": 0.4523,
+      "mAP50_95": 0.2539,
+      "num_predictions": 41888
+    },
+    {
+      "conf_threshold": 0.3,
+      "mAP50": 0.4389,
+      "mAP50_95": 0.2487,
+      "num_predictions": 37733
+    },
+    {
+      "conf_threshold": 0.35,
+      "mAP50": 0.4226,
+      "mAP50_95": 0.2414,
+      "num_predictions": 34024
+    },
+    {
+      "conf_threshold": 0.4,
+      "mAP50": 0.4021,
+      "mAP50_95": 0.2332,
+      "num_predictions": 30810
+    }
+  ]
+}

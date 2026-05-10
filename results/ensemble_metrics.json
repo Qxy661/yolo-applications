@@ -1,0 +1,20 @@
+{
+  "method": "Ensemble (v8n*0.7 + v8s*1.0)",
+  "mAP50": 0.353477385981528,
+  "mAP50_95": 0.21400401846149017,
+  "total_predictions": 70653,
+  "per_class_ap50": {
+    "pedestrian": 0.4091,
+    "people": 0.2998,
+    "bicycle": 0.1474,
+    "car": 0.7149,
+    "van": 0.3536,
+    "truck": 0.33,
+    "tricycle": 0.2497,
+    "awning-tricycle": 0.114,
+    "bus": 0.5006,
+    "motor": 0.4157
+  },
+  "inference_time_s": 91.1,
+  "time_per_image_s": 0.17
+}
