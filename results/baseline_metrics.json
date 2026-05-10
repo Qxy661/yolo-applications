@@ -1,0 +1,21 @@
+{
+  "model": "YOLOv8n",
+  "imgsz": 640,
+  "epochs": 50,
+  "mAP50": 0.2979,
+  "mAP50_95": 0.1663,
+  "precision": 0.4237,
+  "recall": 0.3191,
+  "per_class_ap50": {
+    "pedestrian": 0.312,
+    "people": 0.243,
+    "bicycle": 0.062,
+    "car": 0.723,
+    "van": 0.337,
+    "truck": 0.278,
+    "tricycle": 0.199,
+    "awning-tricycle": 0.100,
+    "bus": 0.395,
+    "motor": 0.329
+  }
+}

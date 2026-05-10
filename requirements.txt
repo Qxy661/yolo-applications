@@ -1,0 +1,11 @@
+# YOLO + VisDrone 低空小目标检测
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+seaborn>=0.12.0
+tqdm>=4.65.0
+numpy>=1.24.0
+Pillow>=10.0.0
+PyYAML>=6.0
+scipy>=1.10.0

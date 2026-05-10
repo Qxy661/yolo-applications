@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+.venv/
+
+# YOLO 训练结果
+runs/
+*.pt
+*.onnx
+*.engine
+
+# 数据集 (太大不上传)
+data/visdrone/VisDrone2019-DET-train/
+data/visdrone/VisDrone2019-DET-val/
+data/visdrone/VisDrone2019-DET-test/
+data/visdrone/images/
+data/visdrone/labels/
+*.zip
+*.tar
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store

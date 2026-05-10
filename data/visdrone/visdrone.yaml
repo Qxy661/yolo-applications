@@ -1,0 +1,24 @@
+# VisDrone2019-DET 数据集配置
+# 用于 YOLOv8 目标检测训练
+
+# 数据集路径 (相对于项目根目录)
+path: data/visdrone
+train: images/train
+val: images/val
+test: images/test
+
+# 类别数量
+nc: 10
+
+# 类别名称 (按 VisDrone 官方顺序)
+names:
+  0: pedestrian
+  1: people
+  2: bicycle
+  3: car
+  4: van
+  5: truck
+  6: tricycle
+  7: awning-tricycle
+  8: bus
+  9: motor
