@@ -12,8 +12,12 @@
 │   ├── visdrone.yaml         # YOLO 数据集配置
 │   ├── images/               # 图片 (train/val/test)
 │   └── labels/               # YOLO 标注
+├── configs/
+│   └── yolov8s-p2.yaml       # P2 小目标检测头 + CBAM 模型配置
 ├── src/
-│   ├── train.py              # 训练脚本
+│   ├── train.py              # 训练脚本 (基线/改进)
+│   ├── train_p2.py           # P2+CBAM 训练脚本
+│   ├── register_custom_modules.py  # CBAM 模块注册
 │   ├── detect.py             # 推理脚本
 │   ├── evaluate.py           # 评估脚本
 │   ├── visualize.py          # 可视化脚本
@@ -21,7 +25,7 @@
 │   ├── sahi_detect.py        # SAHI 检测可视化
 │   └── optimize.py           # 零训练优化实验
 ├── results/                  # 实验结果与指标 JSON
-├── docs/                     # 项目文档 (8 篇)
+├── docs/                     # 项目文档
 └── ppt/                      # 结题汇报
 ```
 
@@ -65,6 +69,15 @@ python src/visualize.py detect --weights runs/baseline/yolov8n_visdrone/weights/
 | 改进 | YOLOv8s + 800px + 强增强 | 0.4258 | +43.0% |
 | SAHI | 切片推理 (640×640, 重叠20%) | 0.4523 | +51.8% |
 | **零训练优化** | **SAHI + conf=0.05** | **0.4903** | **+64.6%** |
+| P2+CBAM | P2 检测头 + CBAM 注意力 (80ep) | 训练中... | - |
+
+### 第五轮: P2 小目标检测头 + CBAM
+
+在标准 YOLOv8s 基础上增加 160×160 P2 检测层 (专门检测 <16px 目标)，并在 Backbone 的 P2/P3/P4 后插入 CBAM 注意力模块。检测点从 8400 增加到 34000。
+
+```bash
+python src/train_p2.py
+```
 
 ## 类别
 

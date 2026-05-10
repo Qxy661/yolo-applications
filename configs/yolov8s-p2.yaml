@@ -1,0 +1,55 @@
+# YOLOv8s + P2 小目标检测头 + CBAM 注意力
+# 基于 ultralytics YOLOv8s，增加 160×160 P2 检测层
+# 用于 VisDrone 低空小目标检测
+
+nc: 10  # VisDrone 10 类
+
+scales:
+  s: [0.50, 0.50, 1024]  # 保持 YOLOv8s 的缩放参数
+
+# Backbone: 在 C2f 后插入 CBAM 注意力
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]        # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]]       # 1-P2/4
+  - [-1, 3, C2f, [128, True]]        # 2
+  - [-1, 1, CBAM, []]                 # 3 - CBAM on P2 features
+  - [-1, 1, Conv, [256, 3, 2]]       # 4-P3/8
+  - [-1, 6, C2f, [256, True]]        # 5
+  - [-1, 1, CBAM, []]                 # 6 - CBAM on P3 features
+  - [-1, 1, Conv, [512, 3, 2]]       # 7-P4/16
+  - [-1, 6, C2f, [512, True]]        # 8
+  - [-1, 1, CBAM, []]                 # 9 - CBAM on P4 features
+  - [-1, 1, Conv, [1024, 3, 2]]      # 10-P5/32
+  - [-1, 3, C2f, [1024, True]]       # 11
+  - [-1, 1, SPPF, [1024, 5]]         # 12
+
+# Head: FPN + PAN，增加 P2 检测头
+head:
+  # FPN 自顶向下
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 8], 1, Concat, [1]]        # cat backbone P4
+  - [-1, 3, C2f, [512]]              # 15
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 5], 1, Concat, [1]]        # cat backbone P3
+  - [-1, 3, C2f, [256]]              # 18 (P3/8-small)
+
+  # P2 分支: 从 P3 上采样 + backbone P2
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 2], 1, Concat, [1]]        # cat backbone P2
+  - [-1, 3, C2f, [128]]              # 21 (P2/4-tiny)
+
+  # PAN 自底向上
+  - [-1, 1, Conv, [128, 3, 2]]
+  - [[-1, 18], 1, Concat, [1]]       # cat P3
+  - [-1, 3, C2f, [256]]              # 24 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 15], 1, Concat, [1]]       # cat head P4
+  - [-1, 3, C2f, [512]]              # 27 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 12], 1, Concat, [1]]       # cat head P5
+  - [-1, 3, C2f, [1024]]             # 30 (P5/32-large)
+
+  - [[21, 24, 27, 30], 1, Detect, [nc]]  # Detect(P2, P3, P4, P5)
