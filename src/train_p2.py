@@ -42,8 +42,8 @@ def main():
     results = model.train(
         data=data_yaml,
         epochs=80,
-        imgsz=800,
-        batch=8,
+        imgsz=640,
+        batch=4,
         workers=4,
         device="0",
         project=str(project_root / "runs" / "p2"),

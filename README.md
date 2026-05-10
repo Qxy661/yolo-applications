@@ -69,7 +69,7 @@ python src/visualize.py detect --weights runs/baseline/yolov8n_visdrone/weights/
 | 改进 | YOLOv8s + 800px + 强增强 | 0.4258 | +43.0% |
 | SAHI | 切片推理 (640×640, 重叠20%) | 0.4523 | +51.8% |
 | **零训练优化** | **SAHI + conf=0.05** | **0.4903** | **+64.6%** |
-| P2+CBAM | P2 检测头 + CBAM 注意力 (80ep) | 训练中... | - |
+| P2+CBAM | P2 检测头 + CBAM 注意力 (80ep) | 训练中 (1ep: 0.0234) | - |
 
 ### 第五轮: P2 小目标检测头 + CBAM
 
