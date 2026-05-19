@@ -1,0 +1,18 @@
+# 风电场叶片缺陷检测数据集配置
+# 5类核心缺陷
+
+path: E:/yolo-wind-turbine/data
+train: images/train
+val: images/val
+test: images/test
+
+# 类别名称
+names:
+  0: Crack        # 叶片裂纹
+  1: Breakage     # 叶片破损
+  2: Lightning    # 雷击损伤
+  3: Peeling      # 涂层脱落
+  4: Erosion      # 边缘侵蚀
+
+# 类别数量
+nc: 5

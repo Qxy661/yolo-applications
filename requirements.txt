@@ -1,12 +1,27 @@
-# YOLO + VisDrone 低空小目标检测
-ultralytics>=8.0.0
+# YOLO 小目标检测 — 统一依赖
+# 覆盖 VisDrone 低空检测 + 风电叶片缺陷检测等应用场景
+
+# --- 核心框架 ---
+ultralytics>=8.4.0
+torch>=2.0.0
+torchvision>=0.15.0
+
+# --- 图像处理 ---
 opencv-python>=4.8.0
-matplotlib>=3.7.0
-pandas>=2.0.0
-seaborn>=0.12.0
-tqdm>=4.65.0
-numpy>=1.24.0
 Pillow>=10.0.0
-PyYAML>=6.0
+
+# --- 数据处理与分析 ---
+numpy>=1.24.0
+pandas>=2.0.0
 scipy>=1.10.0
+PyYAML>=6.0
+
+# --- 可视化 ---
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# --- 推理优化 ---
 sahi>=0.11.0
+
+# --- 工具 ---
+tqdm>=4.65.0
