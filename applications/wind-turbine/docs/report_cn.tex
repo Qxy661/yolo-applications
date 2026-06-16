@@ -1,0 +1,519 @@
+\documentclass[12pt,a4paper]{article}
+
+% ========== 中文支持 ==========
+\usepackage[UTF8]{ctex}
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% ========== 基础包 ==========
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ========== 页面样式 ==========
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\small 基于改进YOLOv11的风电叶片缺陷检测系统}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ========== 代码样式 ==========
+\lstset{
+  basicstyle=\small\ttfamily,
+  backgroundcolor=\color{gray!5},
+  frame=single,
+  breaklines=true,
+  columns=flexible,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!60!black},
+  stringstyle=\color{red!80!black},
+}
+
+% ========== 图表路径 ==========
+\graphicspath{{../data/docs/figures/}}
+
+% ========== 标题信息 ==========
+\title{\heiti\Large 基于改进YOLOv11的风电叶片缺陷检测系统}
+\author{
+  课程设计报告
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+% 摘要
+% ============================================================
+\begin{abstract}
+风力发电作为清洁能源的重要组成部分，其关键部件——风电叶片的缺陷检测对保障机组安全运行至关重要。传统人工检测方法效率低、主观性强，难以满足大规模风电场的巡检需求。本文基于YOLO系列目标检测模型，针对风电叶片表面缺陷（裂纹、腐蚀）进行自动检测研究。
+
+首先，构建了包含1,096张图像的风电叶片缺陷检测数据集（裂纹和腐蚀两类缺陷），采用YOLO格式标注。其次，以YOLOv11n为基线模型，从COCO预训练权重微调，基线mAP@0.5达到78.01\%。然后，设计了系统性的对比实验，在相同条件下比较YOLOv5n、YOLOv8n和YOLOv11n的检测性能。最后，通过冻结策略消融实验，验证不同冻结层数对小数据集迁移学习效果的影响。
+
+实验结果表明：YOLOv8n在该数据集上表现最优，mAP@0.5达到82.80\%，比基线提升4.79个百分点；全量微调（freeze=0）的YOLOv11n（80.35\%）优于冻结策略，说明COCO预训练权重对小数据集检测任务至关重要。本研究为风电叶片缺陷检测提供了轻量级、高精度的解决方案。
+
+\medskip
+\noindent\textbf{关键词}：风电叶片；缺陷检测；YOLOv11；迁移学习；冻结策略
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+% 第一章 绪论
+% ============================================================
+\section{绪论}
+
+\subsection{研究背景与意义}
+
+风力发电是全球能源转型的重要支柱。截至2025年，全球风电装机容量已超过1,000\,GW，中国作为全球最大的风电市场，装机规模持续扩大。风电叶片作为风力发电机组的核心部件，长期暴露在复杂自然环境中，容易产生裂纹、腐蚀、雷击损伤等表面缺陷。这些缺陷如果不能及时检测和修复，可能导致叶片断裂等严重事故，造成巨大的经济损失和安全风险。
+
+传统的风电叶片检测主要依赖人工目视检查，存在以下问题：
+\begin{itemize}[noitemsep]
+  \item \textbf{效率低下}：单台风机叶片检查需要数小时，大型风电场数百台机组的全面巡检周期长达数月；
+  \item \textbf{主观性强}：检测结果依赖检查人员的经验和判断，漏检率和误检率较高；
+  \item \textbf{安全风险}：高空作业存在安全隐患，恶劣天气条件下无法进行检查；
+  \item \textbf{成本高昂}：需要专业检测人员和大型设备，运维成本居高不下。
+\end{itemize}
+
+因此，开发自动化、智能化的风电叶片缺陷检测系统具有重要的工程应用价值。深度学习目标检测技术的发展为这一问题提供了新的解决思路。
+
+\subsection{国内外研究现状}
+
+\subsubsection{传统图像处理方法}
+早期的缺陷检测研究主要基于传统图像处理技术，包括边缘检测（Canny、Sobel）、形态学运算、阈值分割等方法。这些方法对简单缺陷有效，但面对复杂背景和多变光照条件时鲁棒性不足。
+
+\subsubsection{深度学习目标检测方法}
+近年来，基于深度学习的目标检测方法在工业缺陷检测领域取得了显著进展。主要分为两类：
+
+\textbf{两阶段方法}：以Faster R-CNN为代表，先生成候选区域再进行分类和定位，精度较高但速度较慢。
+
+\textbf{单阶段方法}：以YOLO（You Only Look Once）系列为代表，将检测任务视为回归问题，直接从图像像素预测边界框和类别概率，在速度和精度之间取得了良好平衡。YOLO系列从v1到v11不断演进，在网络结构、特征提取、多尺度检测等方面持续改进。
+
+\subsubsection{注意力机制与特征融合}
+注意力机制（如SE、CBAM、CA）通过自适应加权增强重要特征，在缺陷检测中得到广泛应用。特征融合技术（FPN、PANet、BiFPN）通过多尺度特征聚合提升小目标检测能力。
+
+\subsection{本文主要工作}
+
+本文的主要贡献包括：
+\begin{enumerate}[noitemsep]
+  \item 构建了风电叶片缺陷检测数据集，包含1,096张图像，涵盖裂纹（crack）和腐蚀（erosion）两类缺陷；
+  \item 以YOLOv11n为基线模型，从COCO预训练权重微调，建立了基线性能指标（mAP@0.5 = 78.01\%）；
+  \item 设计了系统性对比实验，在统一条件下比较YOLOv5n、YOLOv8n和YOLOv11n的检测性能；
+  \item 通过冻结策略消融实验（freeze=0/5/10/11），验证了不同迁移学习策略对小数据集检测性能的影响；
+  \item 关键发现：YOLOv8n在小数据集上表现最优（mAP@0.5 = 82.80\%），COCO预训练权重对小数据集检测至关重要。
+\end{enumerate}
+
+% ============================================================
+% 第二章 相关技术
+% ============================================================
+\section{相关技术}
+
+\subsection{YOLO目标检测框架}
+
+YOLO（You Only Look Once）系列是当前最流行的单阶段目标检测算法。其核心思想是将目标检测任务转化为端到端的回归问题，通过单次前向传播同时预测边界框位置和类别概率。
+
+YOLO模型通常由三部分组成：
+\begin{itemize}[noitemsep]
+  \item \textbf{Backbone}（骨干网络）：负责从输入图像中提取多层次特征，如CSPDarknet53、C2f模块等；
+  \item \textbf{Neck}（颈部网络）：负责多尺度特征融合，如PANet、BiFPN等；
+  \item \textbf{Head}（检测头）：负责最终的边界框回归和分类预测。
+\end{itemize}
+
+本文涉及的YOLO版本包括：
+\begin{itemize}[noitemsep]
+  \item \textbf{YOLOv5n}：采用CSPDarknet53 Backbone + PANet Neck，参数量2.50M，计算量7.1 GFLOPs；
+  \item \textbf{YOLOv8n}：改进Backbone + C2f模块 + PANet Neck，参数量3.01M，计算量8.1 GFLOPs；
+  \item \textbf{YOLOv11n}：采用C3k2 + C2PSA注意力 + SPPF，参数量2.62M，计算量6.3 GFLOPs。
+\end{itemize}
+
+\subsection{注意力机制}
+
+注意力机制通过自适应加权机制增强网络对重要特征的关注能力，在缺陷检测中发挥重要作用。
+
+\subsubsection{通道注意力}
+SE（Squeeze-and-Excitation）模块通过全局平均池化获取通道统计信息，再通过两层全连接网络生成通道注意力权重，自适应调整各通道特征的重要性。
+
+\subsubsection{空间注意力}
+空间注意力机制关注图像中不同空间位置的重要性，通常通过卷积操作生成空间注意力图，增强目标区域的特征响应。
+
+\subsubsection{坐标注意力（CA）}
+坐标注意力（Coordinate Attention）将通道注意力分解为两个一维特征编码，分别捕获水平和垂直方向的位置信息，同时保留精确的位置感知能力。
+
+\subsubsection{PSA机制}
+PSA（Pixel Shift Attention）是YOLOv11引入的注意力机制，通过像素移位操作在局部窗口内建模像素间关系，增强特征的局部表达能力。本文在YOLOv11n中使用C2PSA模块，其repeat参数从默认2增加到4以增强注意力效果。
+
+\subsection{特征融合技术}
+
+多尺度特征融合是提升目标检测性能的关键技术，主要方法包括：
+
+\begin{itemize}[noitemsep]
+  \item \textbf{FPN}（Feature Pyramid Network）：自顶向下的特征金字塔，将高层语义特征传递到低层；
+  \item \textbf{PANet}（Path Aggregation Network）：在FPN基础上增加自底向上的路径聚合，增强特征传播；
+  \item \textbf{BiFPN}（Bidirectional Feature Pyramid Network）：双向特征金字塔，支持更高效的多尺度特征融合。
+\end{itemize}
+
+\subsection{轻量化技术}
+
+针对边缘部署需求，轻量化技术通过减少模型参数量和计算量实现高效推理：
+\begin{itemize}[noitemsep]
+  \item \textbf{深度可分离卷积}：将标准卷积分解为逐深度和逐点卷积，减少参数量；
+  \item \textbf{GhostNet/GSConv}：使用轻量级特征生成模块替代标准卷积；
+  \item \textbf{减少网络深度}：如将C3k2模块的repeat参数从2减至1。
+\end{itemize}
+
+% ============================================================
+% 第三章 方法设计
+% ============================================================
+\section{方法设计}
+
+\subsection{数据集与预处理}
+
+\subsubsection{数据来源}
+数据集来源于风电叶片实际巡检图像，涵盖正常叶片和含有缺陷的叶片图像。
+
+\subsubsection{缺陷类别}
+数据集包含两类缺陷：
+\begin{itemize}[noitemsep]
+  \item \textbf{裂纹（crack）}：叶片表面的线性裂缝，可能由疲劳载荷或制造缺陷引起；
+  \item \textbf{腐蚀（erosion）}：叶片表面的材料退化，通常由环境因素（如雨水、盐雾）导致。
+\end{itemize}
+
+\subsubsection{数据规模}
+数据集共1,096张图像，按7:1.5:1.5比例划分：
+\begin{itemize}[noitemsep]
+  \item 训练集：764张图像
+  \item 验证集：166张图像
+  \item 测试集：166张图像
+\end{itemize}
+
+\subsubsection{数据格式}
+采用YOLO格式标注，每张图像对应一个txt标注文件，包含类别ID和归一化的边界框坐标（$x_{center}$, $y_{center}$, $width$, $height$）。
+
+\subsubsection{数据增强}
+训练过程中采用多种数据增强策略：
+\begin{itemize}[noitemsep]
+  \item Mosaic增强（$m=1.0$）：将4张图像拼接为一张，丰富目标尺度和背景；
+  \item MixUp增强（$m=0.1$）：随机混合两张图像，增强模型鲁棒性；
+  \item CopyPaste增强（$m=0.1$）：复制粘贴目标区域，增加正样本数量。
+\end{itemize}
+
+\subsection{基线模型选择}
+
+选择YOLOv11n作为基线模型，原因如下：
+\begin{itemize}[noitemsep]
+  \item 参数量仅2.62M，计算量6.3 GFLOPs，适合资源受限环境部署；
+  \item 引入C2PSA注意力机制，在保持轻量化的同时增强特征表达能力；
+  \item 作为YOLO系列最新版本，代表了当前单阶段检测器的技术水平。
+\end{itemize}
+
+基线训练从COCO预训练权重yolo11n.pt微调，基线性能为mAP@0.5 = 78.01\%。
+
+\subsection{对比实验设计}
+
+对比三种主流YOLO轻量级模型在同一数据集上的检测性能：
+
+\begin{table}[H]
+\centering
+\caption{对比实验模型配置}
+\begin{tabular}{lccc}
+\toprule
+模型 & Backbone & Neck & 参数量 \\
+\midrule
+YOLOv5n & CSPDarknet53 & PANet & 2.50M \\
+YOLOv8n & C2f-Backbone & PANet & 3.01M \\
+YOLOv11n & C3k2+C2PSA & PANet & 2.62M \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+所有模型均从COCO预训练权重微调，采用统一的训练配置：
+\begin{itemize}[noitemsep]
+  \item 训练轮次：150 epochs，批次大小：8，图像尺寸：640$\times$640
+  \item 优化器：AdamW（自动选择），初始学习率：0.001
+  \item 学习率调度：余弦退火衰减（lr0=0.001 $\to$ lrf=0.0001）
+  \item 预热策略：5个epoch，预热动量0.8
+  \item 早停机制：patience=30
+\end{itemize}
+
+\subsection{消融实验设计——冻结策略}
+
+在YOLOv11n上对比不同冻结层数的迁移学习效果，验证冻结策略对小数据集检测性能的影响：
+
+\begin{itemize}[noitemsep]
+  \item \textbf{freeze=0}：无冻结，全量微调（从COCO预训练开始）
+  \item \textbf{freeze=5}：冻结前5层（Backbone前半部分）
+  \item \textbf{freeze=10}：冻结前10层（几乎全部Backbone）
+  \item \textbf{freeze=11}：冻结全部Backbone，仅训练Head
+\end{itemize}
+
+目的：验证在小规模数据集上，冻结策略对检测性能和收敛速度的影响。
+
+\subsection{迁移学习策略}
+
+核心发现：从YAML构建的模型随机初始化训练效果极差（mAP50仅0.43--0.57），说明小数据集（764张训练图像）不足以从头训练有效的检测模型。
+
+解决方案：采用迁移学习策略，从COCO预训练权重或基线best.pt加载权重进行微调。
+
+微调策略包括：
+\begin{itemize}[noitemsep]
+  \item 余弦退火学习率衰减：lr0=0.001 $\to$ lrf=0.0001
+  \item Warmup预热：前5个epoch逐步增加学习率
+  \item 早停机制：patience=30，避免过拟合
+\end{itemize}
+
+% ============================================================
+% 第四章 实验与分析
+% ============================================================
+\section{实验与分析}
+
+\subsection{实验环境}
+
+\begin{table}[H]
+\centering
+\caption{实验环境配置}
+\begin{tabular}{ll}
+\toprule
+项目 & 配置 \\
+\midrule
+GPU & NVIDIA RTX 4060 Laptop (8GB VRAM) \\
+CUDA & 13.0 \\
+PyTorch & 2.6.0 \\
+ultralytics & 8.4.48 \\
+Python & 3.9 \\
+操作系统 & Windows 11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{评估指标}
+
+采用以下指标评估检测性能：
+\begin{itemize}[noitemsep]
+  \item \textbf{mAP@0.5}：IoU=0.5时的平均精度均值，主要评价指标；
+  \item \textbf{mAP@0.5:0.95}：多IoU阈值下的平均精度均值，更严格的评价标准；
+  \item \textbf{Precision}（精确率）：检测结果中正确检测的比例；
+  \item \textbf{Recall}（召回率）：所有真实目标中被正确检测的比例。
+\end{itemize}
+
+此外，还统计了模型的参数量（Params）和计算量（GFLOPs）。
+
+\subsection{训练策略}
+
+统一训练配置如下：
+
+\begin{table}[H]
+\centering
+\caption{统一训练超参数}
+\begin{tabular}{ll}
+\toprule
+参数 & 值 \\
+\midrule
+epochs & 150 \\
+batch & 8 \\
+imgsz & 640$\times$640 \\
+optimizer & auto (AdamW) \\
+lr0 / lrf & 0.001 / 0.0001 \\
+cos\_lr & True \\
+warmup\_epochs & 5 \\
+weight\_decay & 0.0005 \\
+patience & 30 \\
+Mosaic & 1.0 \\
+MixUp & 0.1 \\
+CopyPaste & 0.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{模型对比实验}
+
+对比不同YOLO版本在同一风电叶片缺陷数据集上的检测性能。
+
+\begin{table}[H]
+\centering
+\caption{模型对比实验结果}
+\label{tab:comparison}
+\begin{tabular}{lccccc}
+\toprule
+模型 & mAP@0.5 & mAP@0.5:0.95 & Precision & Recall & Params \\
+\midrule
+YOLOv11n (Baseline) & 0.7801 & 0.4767 & 0.8337 & 0.6769 & 2.62M \\
+YOLOv5n & 0.8078 & 0.4887 & 0.8581 & 0.7000 & 2.50M \\
+\textbf{YOLOv8n} & \textbf{0.8280} & \textbf{0.5218} & \textbf{0.9024} & \textbf{0.7237} & 3.01M \\
+YOLOv11n+Freeze & 0.7644 & 0.4629 & 0.8488 & 0.6667 & 2.62M \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{分析}：
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{YOLOv8n表现最优}：mAP@0.5达到82.80\%，比基线提升4.79个百分点，精确率达到90.24\%。YOLOv8n的C2f模块在特征提取和表达方面具有优势，更适合小数据集的缺陷检测任务。
+
+  \item \textbf{YOLOv5n优于基线}：虽然参数量与YOLOv11n相当（2.50M vs 2.62M），但mAP@0.5更高（80.78\% vs 78.01\%），说明经典的CSPDarknet53在此数据集上的特征提取能力优于YOLOv11的改进Backbone。
+
+  \item \textbf{YOLOv11n注意力机制优势不明显}：C2PSA注意力机制在小数据集（764张训练图像）上未能充分发挥特征选择能力，可能因数据量不足以训练有效的注意力权重。
+
+  \item \textbf{冻结Backbone降低性能}：YOLOv11n+Freeze（freeze=11）的mAP@0.5为76.44\%，低于全量训练基线（78.01\%），但Precision有所提升（84.88\% vs 83.37\%），说明冻结策略减少了过拟合但也限制了模型的学习能力。
+\end{enumerate}
+
+\subsection{消融实验——冻结策略}
+
+在YOLOv11n上对比不同冻结层数的迁移学习效果。
+
+\begin{table}[H]
+\centering
+\caption{冻结策略消融实验结果}
+\label{tab:ablation}
+\begin{tabular}{lccccc}
+\toprule
+策略 & 冻结层数 & mAP@0.5 & vs基线 & Precision & Recall \\
+\midrule
+无冻结 & 0 & 0.8035 & +2.97\% & 0.8492 & 0.7232 \\
+部分冻结 & 5 & 0.6582 & --15.63\% & 0.7689 & 0.5315 \\
+大部分冻结 & 10 & 0.7479 & --4.13\% & 0.7669 & 0.6575 \\
+全冻结 & 11 & 0.7644 & --2.02\% & 0.8488 & 0.6667 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{分析}：
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{全量微调效果最佳}：freeze=0（无冻结）的mAP@0.5为80.35\%，比基线提升2.97个百分点。从COCO预训练权重开始，以低学习率对所有层进行微调，既能利用预训练特征又能充分适应目标数据集。
+
+  \item \textbf{freeze=5效果最差}：mAP@0.5仅为65.82\%，远低于其他策略。冻结Backbone前5层（早期低级特征层）可能导致网络无法学习数据集特定的低级特征表示，而仅微调后几层不足以弥补这一缺陷。
+
+  \item \textbf{freeze=10和freeze=11表现中等}：两者性能接近（74.79\% vs 76.44\%），冻结大部分Backbone后仅微调Neck和Head层，模型容量受限但过拟合减少。
+
+  \item \textbf{非单调关系}：冻结层数与检测性能之间并非简单的单调关系。freeze=5的表现反而最差，说明部分冻结可能造成特征提取和任务适配之间的不协调。
+\end{enumerate}
+
+\subsection{结果分析}
+
+\subsubsection{参数量与精度权衡}
+YOLOv8n以3.01M参数量取得最优性能（82.80\%），而YOLOv5n以最少参数（2.50M）也达到80.78\%。YOLOv11n虽然引入了C2PSA注意力机制，但在小数据集上并未带来显著性能提升。
+
+\subsubsection{训练曲线分析}
+所有模型在训练过程中均表现出良好的收敛趋势。YOLOv11n+Freeze在约30个epoch即触发早停，表明冻结策略下模型快速收敛但容量受限。
+
+\subsubsection{迁移学习的重要性}
+实验表明，从COCO预训练权重微调是小数据集检测任务的关键。随机初始化训练（从YAML构建）的mAP50仅为0.43--0.57，远低于迁移学习的结果。
+
+% ============================================================
+% 第五章 总结与展望
+% ============================================================
+\section{总结与展望}
+
+\subsection{工作总结}
+
+本文针对风电叶片缺陷检测问题，开展了以下工作：
+\begin{enumerate}[noitemsep]
+  \item 构建了风电叶片缺陷检测数据集，包含1,096张图像，涵盖裂纹和腐蚀两类缺陷；
+  \item 以YOLOv11n为基线模型，建立了mAP@0.5 = 78.01\%的基线性能；
+  \item 设计了系统性对比实验，比较了YOLOv5n、YOLOv8n和YOLOv11n的检测性能；
+  \item 通过冻结策略消融实验，验证了不同迁移学习策略对检测性能的影响。
+\end{enumerate}
+
+\subsection{主要发现}
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{YOLOv8n为最优模型}：在风电叶片缺陷检测任务上，YOLOv8n的mAP@0.5达到82.80\%，是所有对比模型中性能最高的。
+
+  \item \textbf{全量微调优于冻结策略}：从COCO预训练全量微调（freeze=0）的YOLOv11n（80.35\%）优于所有冻结策略，说明低学习率全量微调是小数据集迁移学习的有效策略。
+
+  \item \textbf{冻结策略效果有限}：冻结Backbone的迁移学习策略（freeze=11）反而降低性能（76.44\%），且freeze=5表现最差（65.82\%），说明冻结策略在小数据集上限制了模型学习能力。
+
+  \item \textbf{COCO预训练至关重要}：从YAML随机初始化训练的mAP50仅为0.43--0.57，远低于迁移学习结果，证明预训练权重对小数据集检测任务不可或缺。
+
+  \item \textbf{YOLOv11注意力机制在小数据集上优势有限}：C2PSA注意力机制在764张训练图像上未能充分发挥作用，可能需要更大规模数据集才能体现其优势。
+\end{enumerate}
+
+\subsection{不足与展望}
+
+本研究存在以下不足，未来可从以下方向改进：
+
+\begin{enumerate}[noitemsep]
+  \item \textbf{数据量有限}：仅764张训练图像，可扩展更多缺陷类别和数据量，引入数据增强策略如旋转、翻转等；
+  \item \textbf{未探索更复杂的改进方案}：如BiFPN特征融合、GhostNet轻量化、CA注意力机制等网络结构改进；
+  \item \textbf{未考虑实时性优化}：如TensorRT导出、模型量化（INT8/FP16）、剪枝等部署优化技术；
+  \item \textbf{可引入更强的预训练模型}：如YOLOv11s/m等更大规模模型，或采用自监督预训练策略；
+  \item \textbf{可扩展到语义分割任务}：使用YOLOv11-seg实现像素级缺陷定位，提供更精确的缺陷边界信息。
+\end{enumerate}
+
+% ============================================================
+% 参考文献
+% ============================================================
+\section*{参考文献}
+\addcontentsline{toc}{section}{参考文献}
+
+\begin{enumerate}[label={[\arabic*]}, noitemsep]
+  \item Redmon J, Divvala S, Girshick R, et al. You only look once: Unified, real-time object detection[C]//Proceedings of the IEEE conference on computer vision and pattern recognition. 2016: 779--788.
+  \item Jocher G, Chaurasia A, Qiu J. Ultralytics YOLOv8[J]. GitHub repository, 2023.
+  \item Li C, Li L, Geng Y, et al. YOLOv11: An improved real-time object detection algorithm[J]. arXiv preprint arXiv:2410.17725, 2024.
+  \item Ren S, He K, Girshick R, et al. Faster R-CNN: Towards real-time object detection with region proposal networks[J]. IEEE transactions on pattern analysis and machine intelligence, 2017, 39(6): 1137--1149.
+  \item Lin T Y, Dollár P, Girshick R, et al. Feature pyramid networks for object detection[C]//Proceedings of the IEEE conference on computer vision and pattern recognition. 2017: 2117--2125.
+  \item Liu S, Qi L, Qin H, et al. Path aggregation network for instance segmentation[C]//Proceedings of the IEEE conference on computer vision and pattern recognition. 2018: 8759--8768.
+  \item Tan M, Pang R, Le Q V. Efficientdet: Scalable and efficient object detection[C]//Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2020: 10781--10790.
+  \item Hu J, Shen L, Sun G. Squeeze-and-excitation networks[C]//Proceedings of the IEEE conference on computer vision and pattern recognition. 2018: 7132--7141.
+  \item Woo S, Park J, Lee J Y, et al. CBAM: Convolutional block attention module[C]//Proceedings of the European conference on computer vision. 2018: 3--19.
+  \item Hou Q, Zhou D, Feng J. Coordinate attention for efficient mobile network design[C]//Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2021: 13713--13722.
+  \item Jocher G, Chaurasia A, Qiu J. Ultralytics YOLOv5[J]. GitHub repository, 2020.
+  \item Wang C Y, Bochkovskiy A, Liao H Y M. YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors[C]//Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. 2023: 7464--7475.
+\end{enumerate}
+
+% ============================================================
+% 附录
+% ============================================================
+\newpage
+\appendix
+\section{完整训练配置}
+
+\begin{verbatim}
+# YOLOv11n 基线训练配置
+model: yolo11n.pt  # COCO pretrained
+data: wind_turbine_2cls.yaml
+epochs: 150
+batch: 8
+imgsz: 640
+optimizer: auto  # AdamW
+lr0: 0.001
+lrf: 0.0001
+cos_lr: True
+warmup_epochs: 5
+warmup_momentum: 0.8
+weight_decay: 0.0005
+patience: 30
+mosaic: 1.0
+mixup: 0.1
+copy_paste: 0.1
+device: 0
+workers: 4
+\end{verbatim}
+
+\section{模型结构详细说明}
+
+YOLOv11n网络结构包含101层，主要组件：
+\begin{itemize}[noitemsep]
+  \item Backbone：Conv + C3k2 + SPPF + C2PSA
+  \item Neck：Upsample + Concat + C3k2（PANet结构）
+  \item Head：Detect（3个检测尺度：P3/P4/P5）
+  \item 参数量：2.62M，计算量：6.3 GFLOPs
+\end{itemize}
+
+\end{document}

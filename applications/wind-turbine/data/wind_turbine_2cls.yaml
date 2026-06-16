@@ -1,0 +1,12 @@
+# Wind Turbine Blade Defect Detection - 2 Classes (Crack + Erosion)
+# 用于快速验证 YOLOv11n 训练可行性
+
+path: E:/yolo-wind-turbine/data/processed/detection_2cls
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2
+names:
+  0: crack
+  1: erosion

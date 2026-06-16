@@ -2,12 +2,16 @@
 
 基于 YOLO 系列的低空/工业场景小目标检测项目，覆盖多个应用领域。
 
+**🔬 最佳效果：YOLOv8s + 800px + 强增强 → SAHI切片推理 → conf=0.05，mAP@0.5 = 0.4903（+64.6% vs Baseline）**
+
+---
+
 ## 应用场景
 
 | 场景 | 基线模型 | 数据集 | 核心技术 | 状态 |
 |------|---------|--------|---------|------|
-| [低空无人机检测](#低空无人机检测-visdrone) | YOLOv8n/s | VisDrone2019-DET (10类) | P2检测头 + CBAM + SAHI | 已完成4轮实验 |
-| [风电叶片缺陷检测](applications/wind-turbine/) | YOLOv11n/s | 多源合并 (5类) | CA注意力 + GhostNet + BiFPN | 调研完成，待训练 |
+| [低空无人机检测](#低空无人机检测-visdrone) | YOLOv8n/s | VisDrone2019-DET (10类) | P2检测头 + CBAM + SAHI | ✅ 4轮实验完成 / ⚠️ P2+CBAM 训练中 |
+| [风电叶片缺陷检测](applications/wind-turbine/) | YOLOv8n/v11n | Blade30 + WT (2类/5类) | COCO预训练 + 全参微调 + SAM | ✅ 基线+对比完成 / 架构改进待续 |
 
 ---
 
@@ -15,27 +19,38 @@
 
 ```
 YOLO-VisDrone/
-├── src/                              # 通用代码 (VisDrone)
-│   ├── train.py / train_p2.py        # 训练脚本
-│   ├── detect.py / evaluate.py       # 推理与评估
-│   ├── sahi_detect.py / sahi_eval.py # SAHI 切片推理
+├── src/                              # 训练/推理/评估脚本
+│   ├── train.py                      # Baseline 训练 (YOLOv8n + 640px)
+│   ├── train_improved.py             # Improved 训练 (YOLOv8s + 800px + 强增强)
+│   ├── train_p2.py                   # [WIP] P2+CBAM 训练
+│   ├── evaluate.py / evaluate_all.py # 模型评估
+│   ├── sahi_eval.py                  # SAHI 切片推理评估
+│   ├── optimize.py                   # 零训练优化 (阈值搜索/TTA/集成)
 │   ├── cbam.py                       # CBAM 注意力模块
-│   └── register_custom_modules.py    # 自定义模块注册
+│   ├── register_custom_modules.py    # 自定义模块注册
+│   ├── detect.py / visualize.py      # 推理与可视化
+│   └── utils.py                      # 工具函数
 ├── configs/                          # 模型配置
-│   └── yolov8s-p2.yaml
+│   └── yolov8s-p2.yaml               # P2+CBAM 自定义模型结构
 ├── data/visdrone/                    # VisDrone 数据集
+│   ├── visdrone.yaml                 # 数据配置 (10类)
+│   ├── images/                       # 训练/验证/测试图片
+│   └── labels/                       # YOLO 格式标注
+├── runs/                             # 训练输出与权重
+│   ├── detect/runs/baseline/         # ✅ Baseline 权重 (best.pt)
+│   ├── detect/runs/improved/         # ✅ Improved 权重 (best.pt)
+│   ├── eval/                         # 评估结果
+│   └── p2/                           # ⚠️ P2+CBAM 权重 (训练中)
 ├── docs/                             # 项目文档
-│   ├── experiments/                  # 实验报告
-│   └── ...技术文档...
+│   ├── experiments/                  # 4轮实验报告
+│   ├── tech_innovation_report.md     # 技术创新报告
+│   ├── presentation_plan.md          # PPT 汇报方案
+│   └── ...其他技术文档...
+├── results/                          # 评估指标 JSON / 对比图
 ├── ppt/                              # 汇报材料
-├── applications/                     # 应用场景扩展
-│   └── wind-turbine/                 # 风电叶片缺陷检测
-│       ├── src/                      # 风电专用脚本
-│       ├── configs/                  # YOLOv11 配置
-│       ├── scripts/                  # 数据集工具
-│       ├── data/                     # 风电数据配置
-│       └── docs/                     # 风电技术文档
-├── requirements.txt                  # 统一依赖
+├── applications/wind-turbine/        # 风电叶片缺陷检测 (完整子项目)
+│   ├── src/configs/data/docs/...     # 独立的应用代码与数据
+├── requirements.txt                  # 依赖
 └── README.md
 ```
 
@@ -45,34 +60,54 @@ YOLO-VisDrone/
 
 基于 VisDrone2019-DET 数据集的低空小目标检测，解决无人机航拍图像中行人、车辆等小目标检测难题。
 
-### 快速开始
+### 快速复现最佳效果
 
 ```bash
-# 环境配置
+# 1. 环境配置
 setup_env.bat
 
-# 下载数据集
+# 2. 下载 VisDrone 数据集
 python download_data.py
 
-# 训练基线
-python src/train.py --model yolov8n --epochs 100
+# 3. 评估已训练好的最佳模型（含权重）
+python src/evaluate.py --weights runs/detect/runs/improved/yolov8s_visdrone/weights/best.pt --imgsz 800
 
-# 评估
-python src/evaluate.py --weights runs/baseline/yolov8n_visdrone/weights/best.pt
+# 4. SAHI 切片推理（零成本提升小目标）
+python src/sahi_eval.py
 
-# SAHI 切片推理
-python src/sahi_eval.py --weights runs/baseline/yolov8n_visdrone/weights/best.pt
+# 5. 阈值搜索 + 优化（mAP@0.5 → 0.4903）
+python src/optimize.py
+```
+
+**权重文件路径：**
+- 最佳单模型：`runs/detect/runs/improved/yolov8s_visdrone/weights/best.pt`
+- Baseline：`runs/detect/runs/baseline/yolov8n_visdrone/weights/best.pt`
+- P2+CBAM（WIP）：`runs/p2/yolov8s_p2_cbam/weights/best.pt`
+
+### 从头训练
+
+```bash
+# Baseline
+python src/train.py --model yolov8n --epochs 50 --batch 16
+
+# Improved（推荐）
+python src/train_improved.py
+
+# P2+CBAM [实验性，训练较慢]
+python src/train_p2.py
 ```
 
 ### 实验结果
 
-| 实验 | 方法 | mAP@0.5 | vs 基线 |
-|------|------|---------|---------|
-| 基线 | YOLOv8n + 640px | 0.2979 | - |
-| 改进 | YOLOv8s + 800px + 强增强 | 0.4258 | +43.0% |
-| SAHI | 切片推理 (640×640, 重叠20%) | 0.4523 | +51.8% |
-| **零训练优化** | **SAHI + conf=0.05** | **0.4903** | **+64.6%** |
-| P2+CBAM | P2 检测头 + CBAM 注意力 | 训练中 | - |
+| 实验 | 方法 | mAP@0.5 | vs Baseline | 训练成本 |
+|:----:|------|:-------:|:-----------:|:--------:|
+| ① Baseline | YOLOv8n + 640px | 0.2979 | — | ~1h |
+| ② Improved | YOLOv8s + 800px + 强增强 | 0.4258 | +43.0% | ~2.5h |
+| ③ SAHI | 切片推理 (640×640, 20%重叠) | 0.4523 | +51.8% | 零训练 |
+| ④ **零训练优化** | **SAHI + conf=0.05** | **0.4903** | **+64.6%** | **零训练** |
+| ⑤ P2+CBAM | P2检测头 + CBAM注意力 | ⏳ 训练中 | — | 已训41轮 |
+
+> P2+CBAM 为架构探索实验，训练尚未收敛。两轮零成本优化（SAHI + 阈值搜索）已取得当前最佳效果。完整消融实验和 P2+CBAM 结论预计 7 月更新。
 
 ### VisDrone 类别
 

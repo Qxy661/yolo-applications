@@ -1,0 +1,19 @@
+{
+  "method": "SAHI + P2+CBAM",
+  "mAP50": 0.3363850265672911,
+  "mAP50_95": 0.16042004802463686,
+  "total_predictions": 99497,
+  "inference_time_s": 289.5,
+  "per_class_ap50": {
+    "pedestrian": 0.467,
+    "people": 0.3221,
+    "bicycle": 0.0826,
+    "car": 0.784,
+    "van": 0.3606,
+    "truck": 0.2328,
+    "tricycle": 0.2045,
+    "awning-tricycle": 0.0837,
+    "bus": 0.3871,
+    "motor": 0.4394
+  }
+}

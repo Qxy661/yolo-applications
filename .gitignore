@@ -10,9 +10,18 @@ venv/
 
 # YOLO 训练结果
 runs/
-*.pt
 *.onnx
 *.engine
+
+# 模型权重 (默认不上传，太大)
+*.pt
+# 但允许跟踪风电子项目中已训练好的小权重
+!applications/wind-turbine/weights/yolov8n.pt
+!applications/wind-turbine/weights/yolov11n_baseline.pt
+!applications/wind-turbine/weights/yolov11n_freeze.pt
+!applications/wind-turbine/weights/yolov5n.pt
+# SAM 权重太大，不上传 (358MB)
+*.pth
 
 # 数据集 (太大不上传)
 data/visdrone/VisDrone2019-DET-train/
@@ -20,6 +29,8 @@ data/visdrone/VisDrone2019-DET-val/
 data/visdrone/VisDrone2019-DET-test/
 data/visdrone/images/
 data/visdrone/labels/
+applications/wind-turbine/data/processed/
+applications/wind-turbine/data/raw/
 *.zip
 *.tar
 
@@ -32,3 +43,6 @@ data/visdrone/labels/
 # OS
 Thumbs.db
 .DS_Store
+
+# Office temp files
+~$*

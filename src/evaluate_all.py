@@ -22,21 +22,24 @@ DATA_YAML = str(PROJECT_ROOT / "data" / "visdrone" / "visdrone.yaml")
 RESULTS_DIR = PROJECT_ROOT / "results"
 
 # ── 模型定义 ──────────────────────────────────────────────
+# 注意：由于 ultralytics 在部分版本中会将相对 project 路径嵌套到 runs/detect/ 下，
+# baseline 和 improved 的实际路径为 runs/detect/runs/... 而非 runs/...
+# 详见训练脚本中的路径说明
 MODELS = {
     "baseline": {
         "name": "YOLOv8n Baseline",
-        "weights": PROJECT_ROOT / "runs" / "baseline" / "yolov8n_visdrone" / "weights" / "best.pt",
+        "weights": PROJECT_ROOT / "runs" / "detect" / "runs" / "baseline" / "yolov8n_visdrone" / "weights" / "best.pt",
         "imgsz": 640,
         "description": "YOLOv8n, 640px, 默认增强, 50 epochs",
     },
     "improved": {
         "name": "YOLOv8s Improved",
-        "weights": PROJECT_ROOT / "runs" / "improved" / "yolov8s_visdrone" / "weights" / "best.pt",
+        "weights": PROJECT_ROOT / "runs" / "detect" / "runs" / "improved" / "yolov8s_visdrone" / "weights" / "best.pt",
         "imgsz": 800,
         "description": "YOLOv8s, 800px, 强增强 (MixUp+CopyPaste+Erasing), 80 epochs",
     },
     "p2_cbam": {
-        "name": "YOLOv8s P2+CBAM",
+        "name": "YOLOv8s P2+CBAM [WIP]",
         "weights": PROJECT_ROOT / "runs" / "p2" / "yolov8s_p2_cbam" / "weights" / "best.pt",
         "imgsz": 800,
         "description": "YOLOv8s + P2检测头(160x160) + CBAM注意力, 800px, 80 epochs",

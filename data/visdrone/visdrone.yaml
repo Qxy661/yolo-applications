@@ -2,7 +2,7 @@
 # 用于 YOLOv8 目标检测训练
 
 # 数据集路径 (相对于项目根目录)
-path: data/visdrone
+path: E:/yolo-visdrone/data/visdrone
 train: images/train
 val: images/val
 test: images/test

@@ -41,7 +41,7 @@ def main():
     # 3. 训练
     results = model.train(
         data=data_yaml,
-        epochs=80,
+        epochs=40,
         imgsz=640,
         batch=4,
         workers=4,

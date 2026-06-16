@@ -1,126 +1,155 @@
-# 风电场叶片缺陷检测 — Wind Turbine Blade Defect Detection
+# 风电叶片缺陷检测
 
-基于 YOLOv11 的风力发电机叶片表面缺陷检测系统。
+> 基于 YOLO 系列的风电叶片表面缺陷检测  
+> 属于 [YOLO 小目标检测](https://github.com/Qxy661/yolo-visdrone) 项目子应用  
+> 最佳模型：YOLOv8n, mAP@0.5 = 82.80%
 
-## 项目简介
-
-本项目使用 YOLOv11 目标检测模型，实现对风力发电机叶片表面缺陷的自动识别，支持 **5 类核心缺陷**：
-
-| 类别ID | 中文名称 | 英文名称 | 说明 |
-|--------|---------|---------|------|
-| 0 | 叶片裂纹 | Crack | 表面裂纹、疲劳裂纹 |
-| 1 | 叶片破损 | Breakage | 缺损、断裂、孔洞 |
-| 2 | 雷击损伤 | Lightning | 雷击烧蚀、碳化痕迹 |
-| 3 | 涂层脱落 | Peeling | 涂层剥落、脱漆 |
-| 4 | 边缘侵蚀 | Erosion | 前缘侵蚀、边缘磨损 |
-
-## 技术路线
-
-```
-文献调研 → 数据集构建 → YOLOv11基线训练 → 改进优化 → 部署评估
-   ↓           ↓              ↓               ↓            ↓
- 论文精读   多源数据合并    ultralytics      注意力机制    ONNX导出
- 5类缺陷   YOLO格式统一    预训练权重        数据增强      推理优化
-```
+---
 
 ## 项目结构
 
 ```
-yolo-wind-turbine/
-├── README.md                    # 项目说明
-├── LICENSE                      # MIT License
-├── PROJECT_PLAN.md              # 详细项目计划
-├── TECHNICAL_REPORT.md          # 技术报告(文献综述+数据集调研+方案设计)
-├── requirements.txt             # Python 依赖
-├── setup_env.bat                # 一键环境配置
+wind-turbine/
+├── src/                              # 训练/推理/评估脚本
+│   ├── train.py                      # 基线训练
+│   ├── train_improved.py             # 改进训练 (CA/ECA注意力)
+│   ├── train_experiments.py          # 对比实验 + 消融实验
+│   ├── evaluate.py / detect.py       # 评估与推理
+│   ├── visualize_results.py          # 结果可视化
+│   ├── utils.py                      # 工具函数
+│   └── sam/                          # YOLO+SAM 融合
+│       ├── run_yolo_sam.py           # SAM 分割流水线
+│       └── analyze_results.py        # 分割结果分析
+├── configs/                          # 模型配置
+│   ├── yolov11n.yaml                 # 5类基线配置
+│   ├── yolov11s.yaml                 # 5类+CA注意力
+│   └── ...v2 改进版 YAML
+├── models/                           # 改进模型 YAML (v2)
+│   ├── yolo11n_ca_v2.yaml            # C2PSA注意力增强
+│   ├── yolo11n_bifpn_v2.yaml         # BiFPN特征融合
+│   ├── yolo11n_light_v2.yaml         # 轻量化版本
+│   └── yolo11n_improved_v2.yaml      # 综合改进
 ├── data/
-│   ├── wind_turbine.yaml        # 数据集配置
-│   ├── images/{train,val,test}/ # 图片目录
-│   ├── labels/{train,val,test}/ # YOLO标注
-│   └── raw/                     # 原始数据集
-├── src/
-│   ├── train.py                 # 基线训练脚本
-│   ├── train_improved.py        # 改进训练(CA/ECA/多尺度)
-│   ├── detect.py                # 推理脚本
-│   ├── evaluate.py              # 评估脚本
-│   └── utils.py                 # 工具函数
-├── configs/
-│   ├── yolov11n.yaml            # YOLOv11-nano基线配置
-│   └── yolov11s.yaml            # YOLOv11-small+CA注意力配置
-├── scripts/
-│   ├── download_datasets.py     # 数据集下载脚本
-│   ├── merge_datasets.py        # 多源数据合并
-│   └── split_dataset.py         # 数据集划分(8:1:1)
-├── docs/
-│   ├── literature_review.md     # 文献综述
-│   └── experiment_log.md        # 实验记录
-├── results/                     # 实验结果(JSON)
-└── runs/                        # 训练权重
+│   ├── wind_turbine.yaml             # 5类数据集配置
+│   ├── wind_turbine_2cls.yaml        # 2类数据集配置
+│   ├── processed/                    # 处理后的 YOLO 格式数据
+│   │   ├── detection/                # 5类 (1158图)
+│   │   └── detection_2cls/           # 2类 (1096图)
+│   └── scripts/                      # 数据处理流水线
+├── weights/                          # 训练好的模型权重
+│   ├── yolov8n.pt                    # ✅ 最佳模型 (82.80%)
+│   ├── yolov11n_baseline.pt          # YOLOv11n 基线
+│   ├── yolov11n_freeze.pt            # 冻结策略
+│   └── sam_vit_b_01ec64.pth          # SAM 权重
+├── runs/detect/                      # 训练输出
+│   ├── wind_turbine_2cls/            # 基线训练
+│   ├── compare_yolov5n/              # YOLOv5n 对比
+│   ├── compare_yolov8n/              # YOLOv8n 对比 (最佳)
+│   └── ablation_freeze_*/            # 冻结消融
+├── docs/                             # 完整文档
+│   ├── comprehensive_survey.md       # 16+篇论文调研
+│   ├── experiment_log.md             # 实验日志
+│   ├── reference_analysis.md         # 论文深度分析
+│   ├── sam_yolo_research_report.md   # SAM+YOLO 研究报告
+│   ├── TECHNICAL_REPORT.md           # 技术报告
+│   └── data_reports/                 # 数据分析报告
+├── ppt/                              # 汇报材料
+├── experiments/                      # 对比评估脚本
+└── requirements.txt
 ```
 
-## 快速开始
-
-### 环境配置
-
-```bash
-# 激活 conda 环境
-conda activate yolo-project
-
-# 安装依赖
-pip install -r requirements.txt
-
-# 验证环境
-python -c "import ultralytics; print(ultralytics.__version__)"
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-### 数据集准备
-
-```bash
-# 1. 下载数据集(需手动从百度网盘/Google Drive下载)
-# 2. 放入 data/raw/ 目录
-# 3. 合并并划分
-python scripts/merge_datasets.py
-python scripts/split_dataset.py
-```
-
-### 训练
-
-```bash
-# 基线训练
-python src/train.py --model yolo11n.pt --epochs 100 --batch 16
-
-# 改进训练(带CA注意力)
-python src/train_improved.py --model yolo11n.pt --use-ca --epochs 100
-```
-
-### 评估与推理
-
-```bash
-# 评估
-python src/evaluate.py --weights runs/train/baseline/weights/best.pt
-
-# 推理
-python src/detect.py --weights runs/train/baseline/weights/best.pt --source test_images/
-```
+---
 
 ## 数据集
 
-本项目需要多源数据合并，详见 `TECHNICAL_REPORT.md` 第3章。
+### 2 类（当前最佳效果）
 
-| 数据集 | 图片数 | 格式 | 下载方式 | 覆盖类别 |
-|--------|--------|------|---------|---------|
-| 风电叶片表面缺陷数据集 | 3,800+ | YOLO txt | 百度网盘 | 待确认 |
-| Blade30 无人机巡检数据集 | 1,302 | JSON+PNG | Google Drive | Defects, Contaminations |
-| 风电叶片分类数据集 | 1,000+ | VOC XML | GitHub | crack, thunderstrike等6类 |
+| 属性 | 值 |
+|------|-----|
+| 类别 | crack (裂纹), erosion (腐蚀) |
+| 规模 | 1,096 图 (train: 764, val: 166, test: 166) |
+| 来源 | Blade30(风电叶片) + WT Blade Defect 合并 |
+| 平均标注 | 1.67 目标/图 |
 
-## 参考文献
+### 5 类（待完善）
 
-1. SOD-YOLO (2022): 改进YOLOv5+CBAM, mAP 95.1%
-2. WTBD-YOLOv8 (2024): YOLOv8+GhostCBS+MHSA, AP 98.3%
-3. GCB-YOLO (2025): YOLOv5s+GhostNet+CA+BiFPN, mAP 94.72%
-4. LE-YOLO (2024): YOLOv7+GSConv+SimAM, mAP 78.7%
-5. Memari et al. (2024): 无人机+深度学习检测综述, 114引用
+包含 crack, erosion, lightning, peeling, hole。其中 peeling 和 hole 在当前数据集中无样本，lightning 仅占 5.2%，需要更多数据。
+
+---
+
+## 实验结果
+
+### 模型对比 (2类, val集)
+
+| 模型 | mAP@0.5 | mAP@0.5:0.95 | Precision | Recall | Params | GFLOPs |
+|:----:|:-------:|:------------:|:---------:|:-----:|:------:|:------:|
+| YOLOv11n (Baseline) | 78.01% | 47.67% | 83.37% | 67.69% | 2.62M | 6.3 |
+| YOLOv5n | 80.78% | 48.87% | 85.81% | 70.00% | 2.50M | 7.1 |
+| **YOLOv8n** 🏆 | **82.80%** | **52.18%** | **90.24%** | **72.37%** | 3.01M | 8.1 |
+| YOLOv11n+Freeze | 76.44% | 46.29% | 84.88% | 66.67% | 2.62M | 6.3 |
+
+### 冻结消融实验
+
+| 策略 | mAP@0.5 | vs Baseline |
+|:----:|:-------:|:-----------:|
+| freeze=0 (全参微调) | 80.35% | +2.97% |
+| freeze=5 | 65.82% | -15.63% |
+| freeze=10 | 74.79% | -4.13% |
+| freeze=11 (全部冻结) | 76.44% | -2.02% |
+
+### 关键发现
+
+1. **YOLOv8n > YOLOv11n** — 小数据集上老版本反而更好，C2PSA 注意力优势未体现
+2. **冻结策略失效** — 小数据集上冻结任何层都降低精度，全参数微调最优
+3. **YOLOFromYAML 训练失效** — 从 YAML 随机初始化训练效果远差于从 COCO 预训练加载（mAP ~0.43-0.57 vs 0.828）
+
+---
+
+## 快速开始
+
+```bash
+# 环境配置 (在 yolo-visdrone 根目录)
+setup_env.bat
+
+# 评估最佳模型
+cd applications/wind-turbine
+python src/evaluate.py --weights weights/yolov8n.pt
+
+# 从头训练
+python src/train.py --model yolov8n.pt --epochs 150 --batch 8
+
+# YOLO+SAM 融合分割
+python src/sam/run_yolo_sam.py
+```
+
+---
+
+## 实验路线
+
+```
+第1阶段 (已完成): 基线 + 模型对比
+  → YOLOv5n/v8n/v11n 对比，确定 YOLOv8n 最优
+
+第2阶段 (已完成): 冻结消融
+  → 确定小数据集上全参数微调最优
+
+第3阶段 (未完成): 架构改进
+  → C2PSA/BiFPN/轻量化/YOLO+FromYAML 均未显著提升
+  → 需更换思路：超大模型尝试 / 数据增广 / 5类完善
+
+第4阶段 (探索中): SAM 分割融合
+  → YOLO 检测 → SAM 分割，获取像素级缺陷轮廓
+```
+
+---
+
+## 硬件环境
+
+- GPU: NVIDIA RTX 4060 (8GB) | CUDA 12.4
+- PyTorch 2.6.0 | ultralytics 8.4.48
+- Python 3.9+
+
+---
 
 ## License
 
