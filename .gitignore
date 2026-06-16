@@ -46,3 +46,14 @@ Thumbs.db
 
 # Office temp files
 ~$*
+
+# PPT/汇报材料 (不上传，私密)
+applications/wind-turbine/ppt/
+docs/presentation_plan.md
+**/ppt/
+
+# PDF 报告 (不上传，私密)
+*.pdf
+
+# 实验运行结果/输出图片 (可能含原始数据)
+applications/wind-turbine/results/
