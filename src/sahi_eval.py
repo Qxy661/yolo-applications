@@ -81,7 +81,11 @@ def run_sahi_evaluation():
     project_root = Path(__file__).parent.parent
     val_image_dir = project_root / "data" / "visdrone" / "images" / "val"
     val_label_dir = project_root / "data" / "visdrone" / "labels" / "val"
-    weights_path = project_root / "runs" / "detect" / "runs" / "improved" / "yolov8s_visdrone" / "weights" / "best.pt"
+
+    # 优先使用 weights/best.pt (推荐)，其次使用训练输出路径
+    weights_candidate = project_root / "weights" / "best.pt"
+    weights_fallback = project_root / "runs" / "detect" / "runs" / "improved" / "yolov8s_visdrone" / "weights" / "best.pt"
+    weights_path = weights_candidate if weights_candidate.exists() else weights_fallback
 
     print("=" * 60)
     print("  SAHI 切片推理评估")

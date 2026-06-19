@@ -36,11 +36,14 @@ YOLO-VisDrone/
 │   ├── visdrone.yaml                 # 数据配置 (10类)
 │   ├── images/                       # 训练/验证/测试图片
 │   └── labels/                       # YOLO 格式标注
-├── runs/                             # 训练输出与权重
-│   ├── detect/runs/baseline/         # ✅ Baseline 权重 (best.pt)
-│   ├── detect/runs/improved/         # ✅ Improved 权重 (best.pt)
-│   ├── eval/                         # 评估结果
-│   └── p2/                           # ⚠️ P2+CBAM 权重 (训练中)
+├── runs/                             # 训练输出 (gitignored, 不上传)
+│   ├── detect/runs/baseline/         # Baseline 训练输出
+│   ├── detect/runs/improved/         # Improved 训练输出
+│   └── p2/                           # ⚠️ P2+CBAM 训练输出
+├── weights/                          # 训练好的模型权重 (可直接使用)
+│   ├── best.pt                       # ✅ 最佳模型 (YOLOv8s, mAP 0.4903)
+│   ├── baseline.pt                   # Baseline 对照
+│   └── README.md                     # 权重说明
 ├── docs/                             # 项目文档
 │   ├── experiments/                  # 4轮实验报告
 │   ├── tech_innovation_report.md     # 技术创新报告
@@ -69,20 +72,25 @@ setup_env.bat
 # 2. 下载 VisDrone 数据集
 python download_data.py
 
-# 3. 评估已训练好的最佳模型（含权重）
-python src/evaluate.py --weights runs/detect/runs/improved/yolov8s_visdrone/weights/best.pt --imgsz 800
+# 3. 使用已训练好的最佳模型推理
+python src/detect.py --weights weights/best.pt --source your_image.jpg
 
-# 4. SAHI 切片推理（零成本提升小目标）
+# 4. SAHI 切片推理评估（零成本提升小目标）
 python src/sahi_eval.py
 
 # 5. 阈值搜索 + 优化（mAP@0.5 → 0.4903）
 python src/optimize.py
 ```
 
-**权重文件路径：**
-- 最佳单模型：`runs/detect/runs/improved/yolov8s_visdrone/weights/best.pt`
-- Baseline：`runs/detect/runs/baseline/yolov8n_visdrone/weights/best.pt`
-- P2+CBAM（WIP）：`runs/p2/yolov8s_p2_cbam/weights/best.pt`
+**权重文件路径（推荐）：**
+```bash
+weights/best.pt       # 最佳模型 (YOLOv8s, mAP 0.4903)
+weights/baseline.pt   # 基线对照 (YOLOv8n, mAP 0.2979)
+```
+
+**你也可以直接用训练输出路径的权重（如果是本地跑过训练）：**
+- `runs/detect/runs/improved/yolov8s_visdrone/weights/best.pt`
+- `runs/detect/runs/baseline/yolov8n_visdrone/weights/best.pt`
 
 ### 从头训练
 

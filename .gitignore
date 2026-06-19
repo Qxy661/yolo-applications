@@ -15,11 +15,11 @@ runs/
 
 # 模型权重 (默认不上传，太大)
 *.pt
-# 但允许跟踪风电子项目中已训练好的小权重
+# VisDrone 训练好的权重 (上传，供复现)
+!weights/best.pt
+!weights/baseline.pt
+# 风电子项目已训练好的小权重
 !applications/wind-turbine/weights/yolov8n.pt
-!applications/wind-turbine/weights/yolov11n_baseline.pt
-!applications/wind-turbine/weights/yolov11n_freeze.pt
-!applications/wind-turbine/weights/yolov5n.pt
 # SAM 权重太大，不上传 (358MB)
 *.pth
 
