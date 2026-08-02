@@ -57,3 +57,8 @@ docs/presentation_plan.md
 
 # 实验运行结果/输出图片
 results/sahi_p2_log.txt
+
+# 检测结果图 (运行产物，不入库)
+results/*_detections/
+results/compare/
+results/sahi_compare/
