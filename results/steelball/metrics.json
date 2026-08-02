@@ -1,0 +1,9 @@
+{
+  "model": "yolo26n",
+  "data": "1943 imgs (train 1555 + val 388), single class",
+  "mAP50": 0.928,
+  "mAP50_95": 0.443,
+  "precision": 0.893,
+  "recall": 0.875,
+  "note": "steel-ball detection, simple single-class, strong specular reflection feature"
+}
