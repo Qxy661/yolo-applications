@@ -22,6 +22,8 @@ seaborn>=0.12.0
 
 # --- 推理优化 ---
 sahi>=0.11.0
+# COCO 评估 (SAHI 评估依赖)
+pycocotools>=2.0.0
 
 # --- 工具 ---
 tqdm>=4.65.0
