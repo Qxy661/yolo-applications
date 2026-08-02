@@ -81,6 +81,18 @@ python scripts/deploy_yolo.py infer --model best.onnx --source image.jpg
 python scripts/deploy_yolo.py infer --model best.pt --source 0
 ```
 
+## 部署实例：钢珠模型（2026-08 验证）
+
+**实测结果**：
+- **ONNX 导出**：钢珠 best.pt → best.onnx（9.7MB）
+- **ONNX 推理**：30ms/图（约 33fps），检测 5 个钢珠
+- **WebUI 交互页**：Gradio 页面（上传图片→检测→直径测量）
+  - 核心逻辑验证通过（检测 + 直径 + 置信度）
+  - 路径：`apps/steelball-webui/`
+
+**部署闭环**：best.pt → ONNX（跨平台）→ 推理验证 → WebUI 交互
+**关键成果**：模型可在非 PyTorch 环境运行（ONNX Runtime），实时可用
+
 ## 部署要点
 
 1. **导出不损失精度**：ONNX/TensorRT 保持模型精度，只是换运行方式
