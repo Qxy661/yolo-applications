@@ -92,9 +92,10 @@ python apps/steelball-webui/app.py
 
 | 文档 | 内容 |
 |---|---|
-| [知识体系](docs/tutorial/00-README.md) | 从原理到应用的 7 篇教程 |
+| [知识体系](docs/tutorial/00-README.md) | 从原理到应用的 **9 篇教程**（含 ViT 视觉编码器）|
 | [评估方法论](docs/EVALUATION_METHODOLOGY.md) | 综合诊断→针对性优化 |
 | [部署指南](docs/DEPLOYMENT_GUIDE.md) | 部署原理与实践 |
+| [部署能力分析](docs/DEPLOYMENT_CAPABILITY.md) | 帧率基准与部署方案 |
 | [工程总结](docs/TECHNICAL_SUMMARY.md) | 精炼技术概览 |
 | [项目概览](docs/PROJECT_OVERVIEW.md) | 闭环框架全景 |
 
