@@ -88,6 +88,14 @@ wind-turbine/
 | **YOLOv8n** 🏆 | **82.80%** | **52.18%** | **90.24%** | **72.37%** | 3.01M | 8.1 |
 | YOLOv11n+Freeze | 76.44% | 46.29% | 84.88% | 66.67% | 2.62M | 6.3 |
 
+### 成果文件
+
+| 文件 | 说明 |
+|---|---|
+| [best.pt](results/best.pt) | 最佳模型权重（YOLOv8n，mAP 82.80%）|
+| [training_curve.png](results/training_curve.png) | 训练曲线 |
+| [confusion_matrix.png](results/confusion_matrix.png) | 混淆矩阵 |
+
 ### 冻结消融实验
 
 | 策略 | mAP@0.5 | vs Baseline |
