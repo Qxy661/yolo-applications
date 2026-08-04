@@ -17,7 +17,7 @@
 
 ## 一、数据准备
 
-- **来源**：HuggingFace `daffae/steelball_detect`（2026-07 采集，电赛场景）
+- **来源**：HuggingFace `daffae/steelball_detect`（2026-07 采集，竞赛场景）
 - **规模**：1943 张（train 1555 + val 388），单类 `steel_ball`
 - **清洗**：LabelMe json → YOLO txt 转换（`scripts/convert_steelball_json.py`）
   - 去重 / 过滤无效框 / 优先 txt 标注

@@ -1,4 +1,4 @@
-# 钢珠检测数据集配置（电赛 H题 场景）
+# 钢珠检测数据集配置
 # Source: HuggingFace daffae/steelball_detect (2026-07 采集)
 
 path: /root/yolo-m2/steelball_data

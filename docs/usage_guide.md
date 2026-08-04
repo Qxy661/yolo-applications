@@ -25,7 +25,7 @@
 
 | 项目 | 最低要求 | 推荐配置 |
 |------|---------|---------|
-| GPU | NVIDIA GTX 1060 6GB | RTX 4060 8GB+ |
+| GPU | NVIDIA GTX 1060 6GB | NVIDIA GPU 8GB+ |
 | 内存 | 8GB | 16GB+ |
 | 硬盘 | 15GB 可用空间 | 30GB+ |
 | Python | 3.8+ | 3.9 |
@@ -44,13 +44,13 @@
 ========================================
 
 [OK] 检测到 NVIDIA GPU
-NVIDIA GeForce RTX 4060 Laptop, 8192 MiB
+NVIDIA GPU, 8192 MiB
 
 [1/3] 安装 Python 依赖...
 [2/3] 验证 Ultralytics 安装...
 PyTorch: 2.6.0+cu124
 CUDA: True
-GPU: NVIDIA GeForce RTX 4060 Laptop
+GPU: NVIDIA GPU
 
 [3/3] 配置完成！
 ```

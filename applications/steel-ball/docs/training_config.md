@@ -4,7 +4,7 @@
 
 ## 数据
 
-- **来源**：HuggingFace `daffae/steelball_detect`（2026-07 采集，电赛场景）
+- **来源**：HuggingFace `daffae/steelball_detect`（2026-07 采集，竞赛场景）
 - **规模**：1943 张（train 1555 + val 388），单类 `steel_ball`
 - **清洗**：json→yolo 转换 + 去重 + 过滤无效框
 - **特点**：含强反光、每图 1-10 球（20-30px 小目标）

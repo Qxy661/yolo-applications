@@ -60,13 +60,13 @@
 
 ## ⚡ 实时性能（部署能力）
 
-实测帧率（RTX 4060，详见 [部署能力分析](docs/DEPLOYMENT_CAPABILITY.md)）：
+实测帧率（NVIDIA GPU，详见 [部署能力分析](docs/DEPLOYMENT_CAPABILITY.md)）：
 
 | 部署方案 | 帧率 | 场景 |
 |---|---|---|
 | PyTorch GPU | **86-95 FPS** | 实时控制、开发验证 |
 | ONNX CPU | 45-47 FPS | 跨平台部署 |
-| 嵌入式 (K230) | 30-60 FPS | 电赛/车载 |
+| 嵌入式 (K230) | 30-60 FPS | 边缘/车载 |
 
 **能力**：检测→测量→实时 60fps+ 全链路，ONNX 跨平台部署。
 

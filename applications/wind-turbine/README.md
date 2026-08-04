@@ -145,7 +145,7 @@ python src/sam/run_yolo_sam.py
 
 ## 硬件环境
 
-- GPU: NVIDIA RTX 4060 (8GB) | CUDA 12.4
+- GPU: NVIDIA NVIDIA GPU (8GB) | CUDA 12.4
 - PyTorch 2.6.0 | ultralytics 8.4.48
 - Python 3.9+
 

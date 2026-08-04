@@ -131,7 +131,7 @@ def generate_report(all_results):
         "",
         f"> 评估时间: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
         f"> 数据集: VisDrone2019-DET val (548 images)",
-        f"> 评估设备: RTX 4060 Laptop",
+        f"> 评估设备: NVIDIA GPU",
         "",
         "---",
         "",
