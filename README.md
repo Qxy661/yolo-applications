@@ -81,6 +81,10 @@
 
 ![钢珠检测效果](results/steelball/detection_batch.jpg)
 
+**直径测量可视化**（检测框 + 直径标注 + 中心点 + 高光点）：
+
+![钢珠测量效果](results/steelball/measure_demo.jpg)
+
 **训练曲线**：
 
 ![钢珠训练曲线](results/steelball/training_curve.png)
