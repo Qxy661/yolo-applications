@@ -79,7 +79,7 @@
 
 **检测效果**（高光特征校验 + 直径测量）：
 
-![钢珠检测效果](results/steelball/detection_demo.jpg)
+![钢珠检测效果](results/steelball/detection_batch.jpg)
 
 **训练曲线**：
 

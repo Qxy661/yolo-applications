@@ -96,6 +96,10 @@ wind-turbine/
 | [training_curve.png](results/training_curve.png) | 训练曲线 |
 | [confusion_matrix.png](results/confusion_matrix.png) | 混淆矩阵 |
 
+**检测效果**（YOLOv8n 最佳模型，叶片缺陷识别）：
+
+![风电检测效果](results/detection_v8n.jpg)
+
 ### 冻结消融实验
 
 | 策略 | mAP@0.5 | vs Baseline |
