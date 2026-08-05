@@ -39,6 +39,12 @@
 - **最好类别**：car（AP 0.79）——大目标特征清晰
 - **优化**：SAHI 切片推理提升小目标（bicycle 0.13→0.17）
 
+**评估曲线**（PR 曲线 + 混淆矩阵）：
+
+![PR曲线](results/visdrone/BoxPR_curve.png)
+
+![混淆矩阵](results/visdrone/confusion_matrix_normalized.png)
+
 ## 钢珠检测+直径测量
 
 独立应用分支：检测钢珠 + 测量直径 + 反光特征利用。
@@ -51,6 +57,25 @@
 | Precision / Recall | 0.89 / 0.88 |
 | 推理速度 | 15ms/图（60fps+）|
 | 直径测量 | bbox → 像素直径 → 标定 → 物理直径 |
+
+### 成果文件
+
+| 文件 | 说明 |
+|---|---|
+| [best.pt](applications/steel-ball/results/best.pt) | 训练好的钢珠模型权重 |
+| [metrics.json](applications/steel-ball/results/metrics.json) | 评估指标 |
+
+**检测效果**（高光特征校验 + 直径测量）：
+
+![钢珠检测效果](results/steelball/detection_demo.jpg)
+
+**训练曲线**：
+
+![钢珠训练曲线](results/steelball/training_curve.png)
+
+**数据分布**（EDA：尺寸/数量/反光）：
+
+![钢珠EDA](results/steelball/steelball_eda.png)
 
 ### 技术亮点
 
