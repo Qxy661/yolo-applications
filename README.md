@@ -41,9 +41,9 @@
 
 ### 效果展示
 
-**检测效果**（YOLO26 验证集）：
+**检测效果**（YOLO26 验证集，多图全景）：
 
-![VisDrone检测效果](results/visdrone/yolo26_detection_clean.jpg)
+![VisDrone检测效果](results/visdrone/detection_panorama.jpg)
 
 **训练曲线**：
 
@@ -77,9 +77,9 @@
 | [best.pt](applications/steel-ball/results/best.pt) | 训练好的钢珠模型权重 |
 | [metrics.json](applications/steel-ball/results/metrics.json) | 评估指标 |
 
-**检测效果**（高光特征校验 + 直径测量）：
+**检测效果**（高光特征校验 + 直径测量，多图全景）：
 
-![钢珠检测效果](results/steelball/detection_clean.jpg)
+![钢珠检测效果](results/steelball/detection_panorama.jpg)
 
 **直径测量可视化**（检测框 + 直径标注 + 中心点 + 高光点）：
 
