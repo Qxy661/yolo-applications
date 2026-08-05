@@ -36,8 +36,8 @@ def detect_clean(model, img, conf=0.25, iou_thresh=0.45):
     return [all_boxes[i] for i in keep.tolist() if all_boxes[i][4] >= conf]
 
 
-def draw_clean(img, boxes):
-    """精细绘制：细框 + 小字体 + 不显示 score."""
+def draw_clean(img, boxes, label="steel_ball", color=(0, 255, 0)):
+    """精细绘制：细框 + 小字体 + 不显示 score（通用，支持类别名）."""
     vis = img.copy()
     h, w = img.shape[:2]
     # 动态字体大小（小图用更小字体）
@@ -47,13 +47,12 @@ def draw_clean(img, boxes):
     for b in boxes:
         x1, y1, x2, y2, c = [int(v) if i < 4 else v for i, v in enumerate(b)]
         # 细框（绿色）
-        cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 255, 0), line_width)
+        cv2.rectangle(vis, (x1, y1), (x2, y2), color, line_width)
         # 标签放框外上方（不显示score，避免遮挡）
-        label = "steel_ball"
         (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
         # 标签背景（半透明，提高可读性）
         overlay = vis.copy()
-        cv2.rectangle(overlay, (x1, y1 - th - 4), (x1 + tw + 2, y1), (0, 255, 0), -1)
+        cv2.rectangle(overlay, (x1, y1 - th - 4), (x1 + tw + 2, y1), color, -1)
         cv2.addWeighted(overlay, 0.3, vis, 0.7, 0, vis)
         cv2.putText(vis, label, (x1 + 1, y1 - 3),
                     cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), 1)

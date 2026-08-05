@@ -43,7 +43,7 @@
 
 **检测效果**（YOLO26 验证集）：
 
-![VisDrone检测效果](results/visdrone/yolo26_detection.jpg)
+![VisDrone检测效果](results/visdrone/yolo26_detection_clean.jpg)
 
 **训练曲线**：
 
@@ -79,7 +79,7 @@
 
 **检测效果**（高光特征校验 + 直径测量）：
 
-![钢珠检测效果](results/steelball/detection_batch.jpg)
+![钢珠检测效果](results/steelball/detection_clean.jpg)
 
 **直径测量可视化**（检测框 + 直径标注 + 中心点 + 高光点）：
 
