@@ -1,11 +1,17 @@
 """
 检测结果全景图生成（论文级多图拼接）
 
-用打磨风格（细框/小字体/无score）绘制多张检测图，拼成网格全景。
-适用于：小目标 VisDrone / 钢珠检测 的多图展示。
+支持模式：
+  --mode numbered  框上标"类别固定编号"(所有car=1, pedestrian=2…)，底部画图例条
+  --mode label     框上直接写类别名（如 car/person）
+  --mode none      只画框（最干净，单类别）
 
-Usage:
-    python scripts/detection_panorama.py --images dir/*.jpg --model best.pt --out panorama.jpg
+用法：
+  python scripts/detection_panorama.py \
+      --images "data/visdrone/VisDrone2019-DET-val/images/*.jpg" \
+      --model weights/best.pt --mode numbered \
+      --names "0:pedestrian,1:people,2:bicycle,3:car,4:van,5:truck,6:tricycle,7:awning-tricycle,8:bus,9:motor" \
+      --out results/visdrone/detection_panorama.jpg
 """
 import argparse
 import glob
@@ -17,15 +23,16 @@ from ultralytics import YOLO
 
 
 def detect_clean(model, img, conf=0.25, iou_thresh=0.45):
-    """显式 NMS 检测（解决重复框）."""
+    """显式 NMS 检测，返回 [x1,y1,x2,y2,conf,cls]."""
     results = model(img, conf=min(conf, 0.05), verbose=False)
     all_boxes = []
     for r in results:
         if r.boxes is not None:
             xyxy = r.boxes.xyxy.cpu()
             confs = r.boxes.conf.cpu()
+            clss = r.boxes.cls.cpu()
             for i in range(len(xyxy)):
-                all_boxes.append([*xyxy[i].tolist(), confs[i].item()])
+                all_boxes.append([*xyxy[i].tolist(), confs[i].item(), clss[i].item()])
     if not all_boxes:
         return []
     boxes_t = torch.tensor([b[:4] for b in all_boxes])
@@ -34,68 +41,159 @@ def detect_clean(model, img, conf=0.25, iou_thresh=0.45):
     return [all_boxes[i] for i in keep.tolist() if all_boxes[i][4] >= conf]
 
 
-def draw_clean(img, boxes, label="object", color=(0, 255, 0)):
-    """精细绘制：细框 + 小字体 + 不显示 score."""
+def build_num_map(all_boxes):
+    """给出现的每个类别分配固定编号（按类别 id 升序）。
+    这样所有 car 都标 1、所有 pedestrian 都标 2，多图全景的题注全局一致。"""
+    ids = sorted({int(b[5]) for boxes in all_boxes for b in boxes})
+    return {cid: i + 1 for i, cid in enumerate(ids)}
+
+
+def draw_clean(img, boxes, mode, num_map, names, color=(0, 255, 0)):
+    """精细绘制.
+    mode: none=只框, numbered=类别固定编号, label=类别名
+    """
     vis = img.copy()
-    h, w = img.shape[:2]
-    font_scale = 0.4 if min(h, w) > 400 else 0.3
+    font_scale = 0.4
     line_width = 1
 
     for b in boxes:
-        x1, y1, x2, y2, c = [int(v) if i < 4 else v for i, v in enumerate(b)]
+        x1, y1, x2, y2 = [int(v) for v in b[:4]]
+        cls_id = int(b[5]) if len(b) > 5 else 0
         cv2.rectangle(vis, (x1, y1), (x2, y2), color, line_width)
+
+        if mode == "none":
+            continue
+        elif mode == "numbered":
+            label = str(num_map.get(cls_id, cls_id + 1))
+        else:  # label 模式
+            label = names.get(cls_id, f"c{cls_id}") if names else f"c{cls_id}"
+
         (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
         overlay = vis.copy()
         cv2.rectangle(overlay, (x1, y1 - th - 4), (x1 + tw + 2, y1), color, -1)
         cv2.addWeighted(overlay, 0.3, vis, 0.7, 0, vis)
         cv2.putText(vis, label, (x1 + 1, y1 - 3),
                     cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), 1)
+
     return vis
 
 
-def make_panorama(model, images, label, color, cols=3, max_w=480):
-    """绘制多张检测图并拼成网格全景."""
-    drawn = []
+def _wrap_entries(entries, canvas_w, font_scale, thickness=1, pad=12):
+    """把图例条目按画布宽度折行，返回 (行列表, 行高)."""
+    rows, cur = [], ""
+    for e in entries:
+        trial = e if not cur else f"{cur}  {e}"
+        (tw, th), _ = cv2.getTextSize(trial, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+        if cur and tw > canvas_w - 2 * pad:
+            rows.append(cur)
+            cur = e
+        else:
+            cur = trial
+    if cur:
+        rows.append(cur)
+    return rows, th
+
+
+def draw_legend(canvas, num_map, names):
+    """底部画图例条：1=car  2=pedestrian ...（自包含，可随处复用）."""
+    entries = [f"{n}={names.get(cid, f'c{cid}')}"
+               for cid, n in sorted(num_map.items(), key=lambda kv: kv[1])]
+    h, w = canvas.shape[:2]
+    font_scale = 0.5 if len(entries) <= 6 else 0.42
+    rows, th = _wrap_entries(entries, w, font_scale)
+    bar_h = len(rows) * (th + 6) + 14
+    bar = np.ones((bar_h, w, 3), dtype=np.uint8) * 250
+    cv2.rectangle(bar, (0, 0), (w - 1, bar_h - 1), (0, 0, 0), 1)
+    y = 12 + th
+    for row in rows:
+        (tw, th), _ = cv2.getTextSize(row, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
+        x = max(8, (w - tw) // 2)
+        cv2.putText(bar, row, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale,
+                    (20, 20, 20), 1, cv2.LINE_AA)
+        y += th + 6
+    return np.vstack([canvas, bar])
+
+
+def make_panorama(model, images, mode, names, color, cols=3, max_w=480):
+    """绘制多张检测图并拼网格，返回 (画布, 类别编号映射)."""
+    det_results = []  # (img, boxes)
     for img_path in images:
         img = cv2.imread(img_path)
         if img is None:
             continue
-        # 缩放
         h, w = img.shape[:2]
         scale = max_w / w
         img = cv2.resize(img, (int(w * scale), int(h * scale)))
         boxes = detect_clean(model, img)
-        vis = draw_clean(img, boxes, label, color)
-        drawn.append(vis)
+        det_results.append((img, boxes))
 
-    # 拼成网格
+    if not det_results:
+        raise RuntimeError("No valid images found (glob matched nothing readable).")
+
+    num_map = build_num_map([b for _, b in det_results])
+    drawn = [draw_clean(img, boxes, mode, num_map, names, color)
+             for img, boxes in det_results]
+
     rows = (len(drawn) + cols - 1) // cols
-    cell_h = max(h.shape[0] for h in drawn)
-    cell_w = max(h.shape[1] for h in drawn)
+    cell_h = max(d.shape[0] for d in drawn)
+    cell_w = max(d.shape[1] for d in drawn)
     canvas = np.ones((cell_h * rows, cell_w * cols, 3), dtype=np.uint8) * 255
     for i, img in enumerate(drawn):
         r, c = i // cols, i % cols
         h, w = img.shape[:2]
         canvas[r * cell_h:r * cell_h + h, c * cell_w:c * cell_w + w] = img
-    return canvas
+
+    if mode == "numbered" and names and num_map:
+        canvas = draw_legend(canvas, num_map, names)
+    return canvas, num_map
+
+
+def parse_names(s):
+    """解析 "0:car,1:person" -> {0:'car', 1:'person'}."""
+    if not s:
+        return None
+    d = {}
+    for item in s.split(","):
+        if ":" in item:
+            k, v = item.split(":", 1)
+            d[int(k)] = v.strip()
+    return d
+
+
+VISDRONE_NAMES = ("0:pedestrian,1:people,2:bicycle,3:car,4:van,5:truck,"
+                  "6:tricycle,7:awning-tricycle,8:bus,9:motor")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--images", required=True, help="图片路径或glob")
+    parser.add_argument("--images", required=True)
     parser.add_argument("--model", required=True)
-    parser.add_argument("--label", default="object")
+    parser.add_argument("--mode", default="numbered", choices=["none", "numbered", "label"])
+    parser.add_argument("--names", default=None, help="0:car,1:person")
     parser.add_argument("--color", default="green", choices=["green", "orange", "blue"])
     parser.add_argument("--cols", type=int, default=3)
+    parser.add_argument("--max-w", type=int, default=640, help="每格缩放宽度px")
     parser.add_argument("--out", default="panorama.jpg")
     args = parser.parse_args()
 
     color = {"green": (0, 255, 0), "orange": (0, 165, 255), "blue": (255, 0, 0)}[args.color]
-    images = sorted(glob.glob(args.images))
+    names = parse_names(args.names or VISDRONE_NAMES)
+    if args.images.endswith(".txt"):
+        # 文件列表：每行一个图片路径
+        images = [l.strip() for l in open(args.images) if l.strip()]
+    else:
+        images = sorted(glob.glob(args.images))
+    print(f"匹配 {len(images)} 张图片，取前 {min(len(images), 9)} 张")
     model = YOLO(args.model)
-    canvas = make_panorama(model, images[:9], args.label, color, args.cols)
+    canvas, num_map = make_panorama(model, images[:9], args.mode, names, color, args.cols, args.max_w)
     cv2.imwrite(args.out, canvas)
-    print(f"全景图已保存: {args.out}, 包含 {min(len(images), 9)} 张")
+    print(f"全景图已保存: {args.out}")
+
+    if args.mode == "numbered" and num_map:
+        legend = "  ".join(f"{n}={names.get(c, f'c{c}')}"
+                           for c, n in sorted(num_map.items(), key=lambda kv: kv[1]))
+        print("图例（类别固定编号）:")
+        print(f"  {legend}")
 
 
 if __name__ == "__main__":

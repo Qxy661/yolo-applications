@@ -45,6 +45,8 @@
 
 ![VisDrone检测效果](results/visdrone/detection_panorama.jpg)
 
+> 框上数字为**类别固定编号**（同一类别在所有图中同号），图例见图底部：1=pedestrian 2=people 3=bicycle 4=car 5=van 6=truck 7=tricycle 8=awning-tricycle 9=motor
+
 **训练曲线**：
 
 ![VisDrone训练曲线](results/visdrone/yolo26_training_curve.png)
@@ -77,7 +79,7 @@
 | [best.pt](applications/steel-ball/results/best.pt) | 训练好的钢珠模型权重 |
 | [metrics.json](applications/steel-ball/results/metrics.json) | 评估指标 |
 
-**检测效果**（高光特征校验 + 直径测量，多图全景）：
+**检测效果**（单类钢珠，只画框突出目标，多图全景）：
 
 ![钢珠检测效果](results/steelball/detection_panorama.jpg)
 
