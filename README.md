@@ -95,6 +95,25 @@
 - **EDA 分析**：25×32px 小目标、平均 5.7 球/图
 - **实时性能**：PyTorch **95 FPS**（实测），满足实时控制需求
 
+## 风电叶片缺陷检测
+
+基于 YOLOv8 的风电叶片表面缺陷自动检测系统，支持 5 类核心缺陷识别。
+
+### 成果
+
+| 模型 | mAP@0.5 | mAP@0.5:0.95 | Precision | Recall |
+|---|---|---|---|---|
+| YOLOv11n (Baseline) | 78.01% | 47.67% | 83.37% | 67.69% |
+| **YOLOv8n** 🏆 | **82.80%** | **52.18%** | **90.24%** | **72.37%** |
+
+### 检测效果（叶片缺陷识别）
+
+![风电检测效果](results/wind_turbine/detection_v8n.jpg)
+
+**评估分析**（混淆矩阵）：
+
+![风电混淆矩阵](applications/wind-turbine/results/confusion_matrix.png)
+
 ## ⚡ 实时性能（部署能力）
 
 实测帧率（NVIDIA GPU，详见 [部署能力分析](docs/DEPLOYMENT_CAPABILITY.md)）：
