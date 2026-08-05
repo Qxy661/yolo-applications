@@ -39,11 +39,23 @@
 - **最好类别**：car（AP 0.79）——大目标特征清晰
 - **优化**：SAHI 切片推理提升小目标（bicycle 0.13→0.17）
 
-**评估曲线**（PR 曲线 + 混淆矩阵）：
+### 效果展示
+
+**检测效果**（YOLO26 验证集）：
+
+![VisDrone检测效果](results/visdrone/yolo26_detection.jpg)
+
+**训练曲线**：
+
+![VisDrone训练曲线](results/visdrone/yolo26_training_curve.png)
+
+**评估分析**（混淆矩阵）：
+
+![VisDrone混淆矩阵](results/visdrone/yolo26_confusion.png)
+
+**PR 曲线**：
 
 ![PR曲线](results/visdrone/BoxPR_curve.png)
-
-![混淆矩阵](results/visdrone/confusion_matrix_normalized.png)
 
 ## 钢珠检测+直径测量
 
