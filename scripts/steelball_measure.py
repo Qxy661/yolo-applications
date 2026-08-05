@@ -19,17 +19,40 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def detect_steelballs(model, image):
-    """YOLO 检测钢珠，返回 bbox 列表 [x1,y1,x2,y2,conf]."""
-    results = model(image)
-    boxes = []
+def detect_steelballs(model, image, conf=0.25, iou_thresh=0.5):
+    """YOLO 检测钢珠，返回 bbox 列表 [x1,y1,x2,y2,conf].
+
+    显式 NMS：用 torchvision NMS 合并重叠框，避免"一个钢珠多个框"
+    （钢珠圆形，重复框重叠度高，0.5 阈值安全且正确）
+    """
+    import torch
+    from torchvision.ops import nms
+
+    # 用低置信度检测（暴露潜在多框），再用 NMS 合并
+    results = model(image, conf=min(conf, 0.05))
+    all_boxes = []
     for r in results:
         if r.boxes is not None:
-            for box in r.boxes:
-                xyxy = box.xyxy[0].tolist()
-                conf = box.conf[0].item()
-                boxes.append([*xyxy, conf])
-    return boxes
+            xyxy = r.boxes.xyxy.cpu()
+            confs = r.boxes.conf.cpu()
+            for i in range(len(xyxy)):
+                all_boxes.append([*xyxy[i].tolist(), confs[i].item()])
+
+    if not all_boxes:
+        return []
+
+    # 显式 NMS（合并重叠框）
+    boxes_t = torch.tensor([b[:4] for b in all_boxes])
+    scores_t = torch.tensor([b[4] for b in all_boxes])
+    keep = nms(boxes_t, scores_t, iou_threshold=iou_thresh)
+
+    # 过滤置信度 + 按 NMS 结果保留
+    final = []
+    for idx in keep.tolist():
+        b = all_boxes[idx]
+        if b[4] >= conf:
+            final.append(b)
+    return final
 
 
 def find_specular_highlight(img, box, threshold=200):
