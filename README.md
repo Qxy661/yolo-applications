@@ -79,7 +79,7 @@
 | [best.pt](applications/steel-ball/results/best.pt) | 训练好的钢珠模型权重 |
 | [metrics.json](applications/steel-ball/results/metrics.json) | 评估指标 |
 
-**检测效果**（单类钢珠，只画框突出目标，多图全景）：
+**检测效果**（两类典型工业场景：**密集多球** + **高光小目标**，只画框突出目标，多图全景）：
 
 ![钢珠检测效果](results/steelball/detection_panorama.jpg)
 
