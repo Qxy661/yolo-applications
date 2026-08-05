@@ -83,9 +83,9 @@
 
 ![钢珠检测效果](results/steelball/detection_panorama.jpg)
 
-**直径测量可视化**（检测框 + 直径标注 + 中心点 + 高光点）：
+**直径测量可视化**（多场景：密集多球 / 高光小目标；绿框=高光确认，红框=疑似误检，橙色点=高光，标注=像素/物理直径）：
 
-![钢珠测量效果](results/steelball/measure_demo.jpg)
+![钢珠测量效果](results/steelball/measure_panorama.jpg)
 
 **训练曲线**：
 

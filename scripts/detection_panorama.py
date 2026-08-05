@@ -114,8 +114,22 @@ def draw_legend(canvas, num_map, names):
     return np.vstack([canvas, bar])
 
 
-def make_panorama(model, images, mode, names, color, cols=3, max_w=480):
-    """绘制多张检测图并拼网格，返回 (画布, 类别编号映射)."""
+def _fit_cover(img, cell_w, cell_h):
+    """等比缩放到填满格子，再居中裁剪（cover）——横竖图统一、无留白."""
+    h, w = img.shape[:2]
+    scale = max(cell_w / w, cell_h / h)  # cover：按大的缩放
+    nw, nh = max(cell_w, int(w * scale)), max(cell_h, int(h * scale))
+    img = cv2.resize(img, (nw, nh))
+    # 居中裁剪
+    x = (nw - cell_w) // 2
+    y = (nh - cell_h) // 2
+    return img[y:y + cell_h, x:x + cell_w]
+
+
+def make_panorama(model, images, mode, names, color, cols=3, max_w=480,
+                  cell_w=None, cell_h=None):
+    """绘制多张检测图并拼网格，返回 (画布, 类别编号映射).
+    cell_w/cell_h: 若指定则每格统一尺寸(cover裁剪)，否则自适应."""
     det_results = []  # (img, boxes)
     for img_path in images:
         img = cv2.imread(img_path)
@@ -134,14 +148,20 @@ def make_panorama(model, images, mode, names, color, cols=3, max_w=480):
     drawn = [draw_clean(img, boxes, mode, num_map, names, color)
              for img, boxes in det_results]
 
+    if cell_w and cell_h:
+        # 统一格子尺寸（cover 裁剪，无留白）
+        drawn = [_fit_cover(d, cell_w, cell_h) for d in drawn]
+        cell_w = cell_w
+        cell_h = cell_h
+    else:
+        cell_h = max(d.shape[0] for d in drawn)
+        cell_w = max(d.shape[1] for d in drawn)
+
     rows = (len(drawn) + cols - 1) // cols
-    cell_h = max(d.shape[0] for d in drawn)
-    cell_w = max(d.shape[1] for d in drawn)
     canvas = np.ones((cell_h * rows, cell_w * cols, 3), dtype=np.uint8) * 255
     for i, img in enumerate(drawn):
         r, c = i // cols, i % cols
-        h, w = img.shape[:2]
-        canvas[r * cell_h:r * cell_h + h, c * cell_w:c * cell_w + w] = img
+        canvas[r * cell_h:r * cell_h + cell_h, c * cell_w:c * cell_w + cell_w] = img
 
     if mode == "numbered" and names and num_map:
         canvas = draw_legend(canvas, num_map, names)
@@ -173,6 +193,8 @@ def main():
     parser.add_argument("--color", default="green", choices=["green", "orange", "blue"])
     parser.add_argument("--cols", type=int, default=3)
     parser.add_argument("--max-w", type=int, default=640, help="每格缩放宽度px")
+    parser.add_argument("--cell-w", type=int, default=None, help="固定格子宽度px(统一尺寸)")
+    parser.add_argument("--cell-h", type=int, default=None, help="固定格子高度px(统一尺寸)")
     parser.add_argument("--out", default="panorama.jpg")
     args = parser.parse_args()
 
@@ -185,7 +207,8 @@ def main():
         images = sorted(glob.glob(args.images))
     print(f"匹配 {len(images)} 张图片，取前 {min(len(images), 9)} 张")
     model = YOLO(args.model)
-    canvas, num_map = make_panorama(model, images[:9], args.mode, names, color, args.cols, args.max_w)
+    canvas, num_map = make_panorama(model, images[:9], args.mode, names, color,
+                                    args.cols, args.max_w, args.cell_w, args.cell_h)
     cv2.imwrite(args.out, canvas)
     print(f"全景图已保存: {args.out}")
 
